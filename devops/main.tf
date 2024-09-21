@@ -24,6 +24,12 @@ resource "digitalocean_kubernetes_cluster" "meu_cluster" {
   }
 }
 
+# Configurar o provider Kubernetes para se conectar ao cluster criado
+provider "kubernetes" {
+  config_path    = "~/.kube/config"
+  config_context = "do-nyc1-meu-cluster"
+}
+
 # Output para o cluster kubeconfig
 output "kubeconfig" {
   value     = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].raw_config
