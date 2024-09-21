@@ -1,0 +1,25 @@
+# Ignorar arquivos de sistema operacional e temporários
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Ignorar diretórios de dependências e builds
+**/node_modules/
+**/build/
+**/vendor/
+
+# Ignorar arquivos de ambiente
+**/.env
+# Ignorar o arquivo terraform.tfvars contendo variáveis sensíveis
+**/devops/terraform.tfvars
+# Ignorar diretórios de logs
+**/logs/
+
+# Ignorar binários e caches específicos do backend em Go
+backend/**/*.exe
+backend/**/*.out
+backend/**/*.log.terraform/
+*.tfvars
+.terraform/"devops/terraform.tfstate" 
+"devops/terraform.tfstate" 
