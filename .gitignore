@@ -11,7 +11,6 @@ Thumbs.db
 
 # Ignorar arquivos de ambiente
 **/.env
-
 # Ignorar o arquivo terraform.tfvars contendo variáveis sensíveis
 **/devops/terraform.tfvars
 
@@ -27,6 +26,7 @@ backend/**/*.log
 .terraform/
 *.tfstate
 *.tfstate.backup
+.terraform.lock.hcl # Ignorar o arquivo .terraform.lock.hcl
 
 # Ignorar outros arquivos temporários
 **/*.tfvars

@@ -26,5 +26,6 @@ resource "digitalocean_kubernetes_cluster" "meu_cluster" {
 
 # Output para o cluster kubeconfig
 output "kubeconfig" {
-  value = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].raw_config
+  value     = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].raw_config
+  sensitive = true
 }
