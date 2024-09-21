@@ -27,6 +27,7 @@ backend/**/*.log
 *.tfstate
 *.tfstate.backup
 devops/.terraform.lock.hcl  
+devops/.terraform.tfstate.lock.info
 
 # Ignorar outros arquivos temporários
 **/*.tfvars
