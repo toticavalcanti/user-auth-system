@@ -10,7 +10,7 @@ const Login: React.FC<{ setLogin: (loggedIn: boolean) => void }> = ({ setLogin }
     e.preventDefault();
 
     // Using environment variable for API URL
-    const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3000'; // Fallback to localhost if environment variable is not set
+    const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3001'; // Fallback to localhost if environment variable is not set
 
     try {
         // Fix axios.post call with URL and data as separate arguments
