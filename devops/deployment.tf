@@ -34,16 +34,16 @@ resource "kubernetes_deployment" "auth_api" {
 
           env {
             name  = "APP_URL"
-            value = var.app_url
+            value = var.app_url # URL da aplicação, será injetada dinamicamente
           }
 
           env {
             name  = "DB_DSN"
-            value = var.db_dsn
+            value = var.db_dsn # String de conexão do banco de dados
           }
 
           port {
-            container_port = 3000
+            container_port = 3000 # Porta usada pela aplicação
           }
         }
       }
@@ -74,8 +74,14 @@ resource "kubernetes_deployment" "auth_ui" {
           name  = "auth-ui"
           image = "toticavalcanti/auth-ui:v1.0"
 
+          # Variáveis de ambiente para o frontend (caso necessário)
+          env {
+            name  = "REACT_APP_API_URL"
+            value = var.app_url # URL da API, será injetada dinamicamente
+          }
+
           port {
-            container_port = 80
+            container_port = 80 # Porta do frontend
           }
         }
       }
@@ -92,7 +98,7 @@ resource "kubernetes_service" "auth_ui" {
     selector = {
       app = "auth-ui"
     }
-    type = "LoadBalancer"
+    type = "LoadBalancer" # Expõe o serviço para fora do cluster
     port {
       port        = 80
       target_port = 80
@@ -100,7 +106,7 @@ resource "kubernetes_service" "auth_ui" {
   }
 }
 
-# Expor o backend usando ClusterIP
+# Expor o backend usando ClusterIP (interno ao cluster)
 resource "kubernetes_service" "auth_api" {
   metadata {
     name = "auth-api-service"
@@ -109,7 +115,7 @@ resource "kubernetes_service" "auth_api" {
     selector = {
       app = "auth-api"
     }
-    type = "ClusterIP"
+    type = "ClusterIP" # Mantém o serviço apenas dentro do cluster
     port {
       port        = 3000
       target_port = 3000
