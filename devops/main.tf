@@ -24,6 +24,16 @@ resource "digitalocean_kubernetes_cluster" "meu_cluster" {
   }
 }
 
+resource "digitalocean_database_cluster" "my_mysql_db" {
+  name       = "example-mysql"
+  engine     = "mysql"
+  version    = "8"
+  size       = "db-s-1vcpu-1gb"
+  region     = "nyc1"
+  node_count = 1
+}
+
+
 # Configurar o provider Kubernetes para se conectar ao cluster criado
 provider "kubernetes" {
   config_path    = "~/.kube/config"

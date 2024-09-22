@@ -9,7 +9,8 @@ const Register: React.FC = () => {
 
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
-    const response = await axios.post('http://localhost:3000/api/register',{
+    const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3001'; 
+    const response = await axios.post(`${apiURL}/api/register`,{
       first_name: firstName,
       last_name: lastName,
       email: email,
