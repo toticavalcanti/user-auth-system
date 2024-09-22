@@ -6,38 +6,48 @@ const Login: React.FC<{ setLogin: (loggedIn: boolean) => void }> = ({ setLogin }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [redirect, setRedirect] = useState(false);
+
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
 
     // Using environment variable for API URL
-    const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3001'; // Fallback to localhost if environment variable is not set
+    const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3000'; 
+
+    console.log("Submitting login request to:", apiURL); // Verifique se a URL está correta
 
     try {
-        // Fix axios.post call with URL and data as separate arguments
-        const response = await axios.post(`${apiURL}/api/login`, {
-          email, // Simplification, since the name of the property and variable are the same
-          password,
-        });
+      const response = await axios.post(`${apiURL}/api/login`, {
+        email,
+        password,
+      });
 
-        // Check the response here (example: whether login was successful based on the response status)
-        if (response.status === 200) {
-          // If the response is successful, set the state to redirect
-          setLogin(true);
-          setRedirect(true);
-        } else {
-          // Here you can handle other status codes or set a state to display an error message
-          console.error("Login falhou com status:", response.status);
-          // Ideally I would set an error state here to inform the user that login failed
-        }
-      } catch (error) {
-      console.error("Erro ao fazer login:", error);
-      // Here you could also set an error state to inform the user about the problem
+      console.log("Response received:", response.data); // Verifique se a resposta está correta
+
+      if (response.status === 200) {
+        localStorage.setItem('jwt', response.data.jwt); // Armazene o JWT
+        setLogin(true);
+        setRedirect(true); // Redirecione após login bem-sucedido
+      } else {
+        console.error("Login failed with status:", response.status);
+      }
+    } catch (error: any) {
+      if (error.response) {
+        // O servidor retornou uma resposta com erro (ex: 4xx ou 5xx)
+        console.error("Erro de resposta do servidor:", error.response.data);
+      } else if (error.request) {
+        // A requisição foi feita, mas o servidor não respondeu
+        console.error("Erro de requisição:", error.request);
+      } else {
+        // Algo aconteceu ao configurar a requisição
+        console.error("Erro desconhecido:", error.message);
+      }
     }
   };
 
-  if(redirect){
-    return <Navigate to="/"/>;
+  if (redirect) {
+    return <Navigate to="/" />;
   }
+
   return (
     <form className='form-floating' onSubmit={submit}>
       <h1 className="h3 mb-3 fw-normal">Please sign in</h1>

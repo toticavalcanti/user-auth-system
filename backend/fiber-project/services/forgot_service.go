@@ -22,14 +22,6 @@ func init() {
 	}
 }
 
-func init() {
-	// Carrega o arquivo .env
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Erro ao carregar o arquivo .env")
-	}
-}
-
 func Forgot(c *fiber.Ctx) error {
 	var data map[string]string
 

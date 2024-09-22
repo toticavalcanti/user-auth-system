@@ -1,5 +1,6 @@
 import React, {useState, SyntheticEvent} from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+
 const Register: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -9,16 +10,23 @@ const Register: React.FC = () => {
 
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
-    const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3001'; 
-    const response = await axios.post(`${apiURL}/api/register`,{
-      first_name: firstName,
-      last_name: lastName,
-      email: email,
-      password: password,
-      confirm_password: confirmPassword,
-    });
-    console.log(response);
-  }
+    const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3000'; 
+    try {
+        const response = await axios.post(`${apiURL}/api/register`, {
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            password: password,
+            confirm_password: confirmPassword,
+        });
+        console.log(response);
+    } catch (error) {
+        // Asserção de tipo para AxiosError
+        const axiosError = error as AxiosError; // Importar AxiosError de 'axios'
+
+        console.error("Error registering:", axiosError.response ? axiosError.response.data : axiosError.message);
+    }
+};
   return (
     <form className='form-floating' onSubmit={submit}>
       <h1 className="h3 mb-3 fw-normal">Please register</h1>

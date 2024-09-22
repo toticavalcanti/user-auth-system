@@ -1,13 +1,3 @@
-variable "mailjet_api_key" {
-  description = "Chave da API do Mailjet"
-  type        = string
-}
-
-variable "mailjet_secret_key" {
-  description = "Chave secreta do Mailjet"
-  type        = string
-}
-
 variable "mysql_connection_string" {
   description = "A conexão com o banco de dados MySQL"
   type        = string

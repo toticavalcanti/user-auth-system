@@ -21,17 +21,6 @@ resource "kubernetes_deployment" "auth_api" {
           name  = "auth-api"
           image = "toticavalcanti/fiber-auth-api:v1.0"
 
-          # Variáveis de ambiente para o backend
-          env {
-            name  = "MAILJET_API_KEY"
-            value = var.mailjet_api_key
-          }
-
-          env {
-            name  = "MAILJET_API_SECRET"
-            value = var.mailjet_secret_key
-          }
-
           env {
             name  = "APP_URL"
             value = var.app_url # URL da aplicação, será injetada dinamicamente

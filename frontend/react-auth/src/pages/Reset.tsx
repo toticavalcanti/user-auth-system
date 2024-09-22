@@ -18,7 +18,7 @@ const Reset = () => {
 
     try {
       // Use a consistent base URL, defined as an environment variable or fallback to localhostt
-      const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
       // Make a POST request to the /api/reset route with the necessary data
       await axios.post(`${apiURL}/api/reset`, {
