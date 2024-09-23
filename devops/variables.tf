@@ -1,7 +1,7 @@
-variable "mysql_connection_string" {
-  description = "A conexão com o banco de dados MySQL"
-  type        = string
-}
+# variable "mysql_connection_string" {
+#   description = "A conexão com o banco de dados MySQL"
+#   type        = string
+# }
 
 variable "app_url" {
   description = "URL da aplicação"

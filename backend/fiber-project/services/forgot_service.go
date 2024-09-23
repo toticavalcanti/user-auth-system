@@ -7,20 +7,9 @@ import (
 	"net/smtp"
 	"os"
 
-	"log"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
-
-func init() {
-	// Carrega o arquivo .env
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Erro ao carregar o arquivo .env")
-	}
-}
 
 func Forgot(c *fiber.Ctx) error {
 	var data map[string]string

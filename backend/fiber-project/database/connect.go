@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -14,9 +13,6 @@ import (
 var DB *gorm.DB
 
 func Connect() {
-	// Tenta carregar o .env, mas não falha se o arquivo não existir
-	_ = godotenv.Load(".env")
-
 	dsn := os.Getenv("DB_DSN")
 	if dsn == "" {
 		log.Fatal("DB_DSN environment variable is not set")

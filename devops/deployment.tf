@@ -19,7 +19,7 @@ resource "kubernetes_deployment" "auth_api" {
       spec {
         container {
           name  = "auth-api"
-          image = "toticavalcanti/fiber-auth-api:v1.1"  # Atualizado para a nova versão
+          image = "toticavalcanti/fiber-auth-api:v1.0"
 
           env {
             name  = "APP_URL"
