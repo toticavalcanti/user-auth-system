@@ -1,8 +1,3 @@
-# variable "mysql_connection_string" {
-#   description = "A conexão com o banco de dados MySQL"
-#   type        = string
-# }
-
 variable "app_url" {
   description = "URL da aplicação"
   type        = string
@@ -14,9 +9,10 @@ variable "db_dsn" {
 }
 
 variable "do_token" {
-description = "Token de acesso para a API da DigitalOcean"
-type = string
+  description = "Token de acesso para a API da DigitalOcean"
+  type        = string
 }
+
 variable "gmail_username" {
   description = "Endereço do Gmail para enviar emails"
   type        = string

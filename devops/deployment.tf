@@ -1,4 +1,4 @@
-# Definição do deployment para o backend
+# Backend Deployment
 resource "kubernetes_deployment" "auth_api" {
   metadata {
     name = "auth-api"
@@ -22,14 +22,25 @@ resource "kubernetes_deployment" "auth_api" {
           image = "toticavalcanti/fiber-auth-api:v1.0"
 
           env {
+            name  = "MYSQL_ROOT_PASSWORD"
+            value_from {
+              secret_key_ref {
+                name = "mysql-secret"
+                key  = "mysql-root-password"
+              }
+            }
+          }
+
+          env {
             name  = "APP_URL"
             value = var.app_url
           }
 
           env {
             name  = "DB_DSN"
-            value = var.db_dsn
+            value = "root:$(MYSQL_ROOT_PASSWORD)@tcp(mysql-service:3306)/mysql"
           }
+
 
           port {
             container_port = 3000
@@ -37,30 +48,32 @@ resource "kubernetes_deployment" "auth_api" {
 
           resources {
             limits = {
-              cpu    = "500m"
-              memory = "512Mi"
+              cpu    = "250m" # Reduza para 250m
+              memory = "256Mi" # Reduza para 256Mi
             }
             requests = {
-              cpu    = "250m"
-              memory = "256Mi"
+              cpu    = "100m" # Reduza para 100m
+              memory = "128Mi" # Reduza para 128Mi
             }
           }
 
-          readiness_probe {
-            http_get {
-              path = "/health"  # Ajuste para o endpoint de saúde real da sua aplicação
-              port = 3000
-            }
-            initial_delay_seconds = 10
-            period_seconds        = 5
-          }
+
+
+          # readiness_probe {
+          #   http_get {
+          #     path = "/health"
+          #     port = 3000
+          #   }
+          #   initial_delay_seconds = 10
+          #   period_seconds        = 5
+          # }
         }
       }
     }
   }
 }
 
-# Definição do deployment para o frontend
+# Frontend Deployment
 resource "kubernetes_deployment" "auth_ui" {
   metadata {
     name = "auth-ui"
@@ -97,7 +110,7 @@ resource "kubernetes_deployment" "auth_ui" {
   }
 }
 
-# Expor o frontend usando LoadBalancer (para capturar o APP_URL)
+# Serviço do Frontend (LoadBalancer)
 resource "kubernetes_service" "auth_ui" {
   metadata {
     name = "auth-ui-service"
@@ -114,7 +127,7 @@ resource "kubernetes_service" "auth_ui" {
   }
 }
 
-# Expor o backend usando ClusterIP (interno ao cluster)
+# Serviço do Backend (ClusterIP)
 resource "kubernetes_service" "auth_api" {
   metadata {
     name = "auth-api-service"
