@@ -1,8 +1,14 @@
 #!/bin/sh
 
-# Substituir variáveis de ambiente no arquivo de configuração do Nginx
-envsubst '\$REACT_APP_API_URL' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf.tmp
-mv /etc/nginx/conf.d/default.conf.tmp /etc/nginx/conf.d/default.conf
+# Substituir as variáveis de ambiente no arquivo /config.js no momento da inicialização
+echo "Substituindo variáveis de ambiente no /config.js..."
+
+cat <<EOF > /usr/share/nginx/html/config.js
+window._env_ = {
+  REACT_APP_API_URL: "$REACT_APP_API_URL"
+};
+EOF
 
 # Iniciar o Nginx
-nginx -g 'daemon off;'
+echo "Iniciando o Nginx..."
+exec "$@"
