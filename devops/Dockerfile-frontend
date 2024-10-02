@@ -5,14 +5,14 @@ WORKDIR /app
 # Instalar dependências do sistema necessárias para npm
 RUN apk add --no-cache python3 make g++
 
-# Clean npm cache and set legacy-peer-deps
+# Limpar cache npm e configurar dependências legadas
 RUN npm cache clean --force
 RUN npm config set legacy-peer-deps true
 
 # Copiar package.json e package-lock.json (se existir)
 COPY frontend/react-auth/package*.json ./
 
-# Install dependencies
+# Instalar dependências
 RUN npm ci --only=production --verbose
 
 # Copiar o resto dos arquivos do projeto
@@ -30,8 +30,15 @@ RUN npm run build
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Configurações adicionais do Nginx
+# Copiar a configuração correta do Nginx
 COPY frontend/react-auth/nginx.conf /etc/nginx/conf.d/default.conf
 
+# Configurar permissões apropriadas para o Nginx
+RUN chmod -R 755 /usr/share/nginx/html
+RUN chown -R nginx:nginx /usr/share/nginx/html
+
+# Expor a porta 80 para o Nginx
 EXPOSE 80
+
+# Iniciar o Nginx
 CMD ["nginx", "-g", "daemon off;"]
