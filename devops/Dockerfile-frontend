@@ -9,7 +9,7 @@ RUN apk add --no-cache python3 make g++
 RUN npm cache clean --force
 RUN npm config set legacy-peer-deps true
 
-# Copiar package.json e package-lock.json (se existir)
+# Copiar package.json e package-lock.json
 COPY frontend/react-auth/package*.json ./
 
 # Instalar dependências
