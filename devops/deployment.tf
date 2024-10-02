@@ -61,7 +61,7 @@ resource "kubernetes_deployment" "auth_api" {
             }
           }
 
-          # Readiness probe (descomentado caso queira usar)
+          # Readiness probe (opcional, descomentado se desejar usar)
           # readiness_probe {
           #   http_get {
           #     path = "/health"
