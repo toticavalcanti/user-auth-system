@@ -18,30 +18,19 @@ RUN npm ci --only=production --verbose
 # Copiar o resto dos arquivos do projeto
 COPY frontend/react-auth/ ./
 
-# Informações de diagnóstico
-RUN node --version
-RUN npm --version
-RUN npm list --depth=0 || true
-
 # Construir o aplicativo para produção
 RUN npm run build
 
 # Etapa de produção, usando Nginx para servir o conteúdo estático
 FROM nginx:alpine
-
-# Copiar os arquivos estáticos do build
 COPY --from=build /app/build /usr/share/nginx/html
 
 # Copiar a configuração correta do Nginx
 COPY frontend/react-auth/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copiar o script de entrada para substituir variáveis de ambiente
+# Copiar o script de entrada para substituir variáveis no runtime
 COPY frontend/react-auth/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
-
-# Configurar permissões apropriadas para o Nginx
-RUN chmod -R 755 /usr/share/nginx/html
-RUN chown -R nginx:nginx /usr/share/nginx/html
 
 # Expor a porta 80 para o Nginx
 EXPOSE 80
