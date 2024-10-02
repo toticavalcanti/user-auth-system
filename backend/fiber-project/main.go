@@ -13,7 +13,7 @@ func main() {
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://206.189.253.145", // IP do frontend
+		AllowOrigins:     "*", // IP do frontend
 		AllowCredentials: true,
 		AllowMethods:     "GET,POST,PUT,DELETE",
 	}))

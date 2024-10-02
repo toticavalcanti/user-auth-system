@@ -41,23 +41,20 @@ resource "kubernetes_deployment" "auth_api" {
             value = "root:$(MYSQL_ROOT_PASSWORD)@tcp(mysql-service:3306)/mysql"
           }
 
-
           port {
             container_port = 3000
           }
 
           resources {
             limits = {
-              cpu    = "250m" # Reduza para 250m
-              memory = "256Mi" # Reduza para 256Mi
+              cpu    = "250m"
+              memory = "256Mi"
             }
             requests = {
-              cpu    = "100m" # Reduza para 100m
-              memory = "128Mi" # Reduza para 128Mi
+              cpu    = "100m"
+              memory = "128Mi"
             }
           }
-
-
 
           # readiness_probe {
           #   http_get {
@@ -98,7 +95,7 @@ resource "kubernetes_deployment" "auth_ui" {
 
           env {
             name  = "REACT_APP_API_URL"
-            value = var.app_url
+            value = "http://auth-api-service:3000"
           }
 
           port {
@@ -121,13 +118,13 @@ resource "kubernetes_service" "auth_ui" {
     }
     type = "LoadBalancer"
     port {
-      port        = 80
+      port        = 80   # Usando a porta 80 para frontend
       target_port = 80
     }
   }
 }
 
-# Serviço do Backend (ClusterIP)
+# Serviço do Backend (LoadBalancer)
 resource "kubernetes_service" "auth_api" {
   metadata {
     name = "auth-api-service"
