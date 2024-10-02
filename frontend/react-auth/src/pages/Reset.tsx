@@ -1,10 +1,10 @@
-import React, { useState, SyntheticEvent } from 'react';
-import axios from 'axios';
-import { Navigate, useParams } from 'react-router-dom';
+import React, { useState, SyntheticEvent } from "react";
+import axios from "axios";
+import { Navigate, useParams } from "react-router-dom";
 
 const Reset = () => {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [redirect, setRedirect] = useState(false);
   const { token } = useParams<{ token: string }>();
 
@@ -12,13 +12,19 @@ const Reset = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      console.error('Passwords do not match!');
+      console.error("Passwords do not match!");
       return;
     }
 
     try {
       // Use a consistent base URL, defined as an environment variable or fallback to localhostt
-      const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
+      // Using environment variable for API URL
+      const apiURL =
+        window._env_?.REACT_APP_API_URL ||
+        process.env.REACT_APP_API_URL ||
+        "http://localhost:3000";
+      console.log("REACT_APP_API_URL:", window._env_.REACT_APP_API_URL);
+      console.log("Submitting login request to:", apiURL); // Verifique se a URL está correta
 
       // Make a POST request to the /api/reset route with the necessary data
       await axios.post(`${apiURL}/api/reset`, {
@@ -29,7 +35,7 @@ const Reset = () => {
 
       setRedirect(true);
     } catch (e: any) {
-      console.error('Failed to reset password:', e.response?.data || e.message);
+      console.error("Failed to reset password:", e.response?.data || e.message);
     }
   };
 
@@ -47,7 +53,7 @@ const Reset = () => {
           className="form-control mb-3"
           placeholder="New Password"
           required
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
         />
       </div>
       <div className="form-signin">
@@ -56,7 +62,7 @@ const Reset = () => {
           className="form-control mb-3"
           placeholder="Confirm Password"
           required
-          onChange={e => setConfirmPassword(e.target.value)}
+          onChange={(e) => setConfirmPassword(e.target.value)}
         />
       </div>
       <button className="form-signin btn btn-primary w-100 py-2" type="submit">

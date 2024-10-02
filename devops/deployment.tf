@@ -21,6 +21,7 @@ resource "kubernetes_deployment" "auth_api" {
           name  = "auth-api"
           image = "toticavalcanti/fiber-auth-api:v1.0"
 
+          # Variável de ambiente do MySQL
           env {
             name  = "MYSQL_ROOT_PASSWORD"
             value_from {
@@ -31,20 +32,24 @@ resource "kubernetes_deployment" "auth_api" {
             }
           }
 
+          # Variável de ambiente APP_URL
           env {
             name  = "APP_URL"
             value = var.app_url
           }
 
+          # Variável de ambiente DB_DSN
           env {
             name  = "DB_DSN"
             value = "root:$(MYSQL_ROOT_PASSWORD)@tcp(mysql-service:3306)/mysql"
           }
 
+          # Porta onde o backend escuta
           port {
             container_port = 3000
           }
 
+          # Configuração de recursos
           resources {
             limits = {
               cpu    = "250m"
@@ -56,6 +61,7 @@ resource "kubernetes_deployment" "auth_api" {
             }
           }
 
+          # Readiness probe (descomentado caso queira usar)
           # readiness_probe {
           #   http_get {
           #     path = "/health"
@@ -93,11 +99,13 @@ resource "kubernetes_deployment" "auth_ui" {
           name  = "auth-ui"
           image = "toticavalcanti/auth-ui:v1.0"
 
+          # Variável de ambiente para o frontend se comunicar com o backend
           env {
             name  = "REACT_APP_API_URL"
             value = "http://auth-api-service:3000"
           }
 
+          # Porta onde o frontend escuta
           port {
             container_port = 80
           }
@@ -118,13 +126,13 @@ resource "kubernetes_service" "auth_ui" {
     }
     type = "LoadBalancer"
     port {
-      port        = 80   # Usando a porta 80 para frontend
+      port        = 80   # Usando a porta 80 para o frontend
       target_port = 80
     }
   }
 }
 
-# Serviço do Backend (LoadBalancer)
+# Serviço do Backend (ClusterIP)
 resource "kubernetes_service" "auth_api" {
   metadata {
     name = "auth-api-service"
@@ -133,7 +141,7 @@ resource "kubernetes_service" "auth_api" {
     selector = {
       app = "auth-api"
     }
-    type = "ClusterIP"
+    type = "ClusterIP"   # Backend é exposto internamente com ClusterIP
     port {
       port        = 3000
       target_port = 3000

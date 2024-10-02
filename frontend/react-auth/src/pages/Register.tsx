@@ -10,8 +10,11 @@ const Register: React.FC = () => {
 
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
-    const apiURL = process.env.REACT_APP_API_URL || 'http://localhost:3000'; 
-    console.log('API URL:', process.env.REACT_APP_API_URL);
+    // Using environment variable for API URL
+    const apiURL = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
+    console.log("REACT_APP_API_URL:", window._env_.REACT_APP_API_URL)
+    console.log("Submitting login request to:", apiURL);
+    
     try {
         const response = await axios.post(`${apiURL}/api/register`, {
             first_name: firstName,
