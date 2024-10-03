@@ -1,30 +1,53 @@
 #!/bin/sh
+# vim:sw=4:ts=4:et
+
 set -e
 
-# Primeiro, verifica se o primeiro argumento é "nginx" ou "nginx-debug"
-# Se for, inicia o Nginx
-if [ "${1#-}" != "$1" ]; then
-	set -- nginx "$@"
+entrypoint_log() {
+    if [ -z "${NGINX_ENTRYPOINT_QUIET_LOGS:-}" ]; then
+        echo "$@"
+    fi
+}
+
+# Adicionar a criação do arquivo config.js com variáveis de ambiente
+echo "Substituindo variáveis de ambiente no /usr/share/nginx/html/config.js..."
+cat <<EOF > /usr/share/nginx/html/config.js
+window._env_ = {
+  REACT_APP_API_URL: '${REACT_APP_API_URL}'
+};
+EOF
+
+if [ "$1" = "nginx" ] || [ "$1" = "nginx-debug" ]; then
+    if /usr/bin/find "/docker-entrypoint.d/" -mindepth 1 -maxdepth 1 -type f -print -quit 2>/dev/null | read v; then
+        entrypoint_log "$0: /docker-entrypoint.d/ is not empty, will attempt to perform configuration"
+
+        entrypoint_log "$0: Looking for shell scripts in /docker-entrypoint.d/"
+        find "/docker-entrypoint.d/" -follow -type f -print | sort -V | while read -r f; do
+            case "$f" in
+                *.envsh)
+                    if [ -x "$f" ]; then
+                        entrypoint_log "$0: Sourcing $f";
+                        . "$f"
+                    else
+                        entrypoint_log "$0: Ignoring $f, not executable";
+                    fi
+                    ;;
+                *.sh)
+                    if [ -x "$f" ]; then
+                        entrypoint_log "$0: Launching $f";
+                        "$f"
+                    else
+                        entrypoint_log "$0: Ignoring $f, not executable";
+                    fi
+                    ;;
+                *) entrypoint_log "$0: Ignoring $f";;
+            esac
+        done
+
+        entrypoint_log "$0: Configuration complete; ready for start up"
+    else
+        entrypoint_log "$0: No files found in /docker-entrypoint.d/, skipping configuration"
+    fi
 fi
 
-# Em seguida, verifica novamente se o argumento é nginx ou nginx-debug
-if [ "$1" = 'nginx' ] || [ "$1" = 'nginx-debug' ]; then
-	# Se houver scripts no diretório /docker-entrypoint.d/, executa-os
-	for f in /docker-entrypoint.d/*; do
-		# Só executa se o arquivo for legível
-		if [ -r "$f" ]; then
-			case "$f" in
-				*.sh)
-					echo "$0: Executando $f";
-					. "$f"
-					;;
-				*)
-					echo "$0: Ignorando $f";
-					;;
-			esac
-		fi
-	done
-fi
-
-# Por fim, chama o comando Nginx passado no CMD
 exec "$@"
