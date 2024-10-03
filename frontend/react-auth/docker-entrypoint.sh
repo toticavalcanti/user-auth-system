@@ -1,21 +1,30 @@
 #!/bin/sh
+set -e
 
-# Substituir as variáveis de ambiente no arquivo /config.js no momento da inicialização
-echo "Substituindo variáveis de ambiente no /config.js..."
-
-cat <<EOF > /usr/share/nginx/html/config.js
-window._env_ = {
-  REACT_APP_API_URL: "$REACT_APP_API_URL"
-};
-EOF
-
-# Verificar se o arquivo foi criado corretamente
-if [ -f /usr/share/nginx/html/config.js ]; then
-    echo "Arquivo config.js criado com sucesso."
-else
-    echo "Falha ao criar o arquivo config.js."
+# Primeiro, verifica se o primeiro argumento é "nginx" ou "nginx-debug"
+# Se for, inicia o Nginx
+if [ "${1#-}" != "$1" ]; then
+	set -- nginx "$@"
 fi
 
-# Iniciar o Nginx
-echo "Iniciando o Nginx..."
+# Em seguida, verifica novamente se o argumento é nginx ou nginx-debug
+if [ "$1" = 'nginx' ] || [ "$1" = 'nginx-debug' ]; then
+	# Se houver scripts no diretório /docker-entrypoint.d/, executa-os
+	for f in /docker-entrypoint.d/*; do
+		# Só executa se o arquivo for legível
+		if [ -r "$f" ]; then
+			case "$f" in
+				*.sh)
+					echo "$0: Executando $f";
+					. "$f"
+					;;
+				*)
+					echo "$0: Ignorando $f";
+					;;
+			esac
+		fi
+	done
+fi
+
+# Por fim, chama o comando Nginx passado no CMD
 exec "$@"
