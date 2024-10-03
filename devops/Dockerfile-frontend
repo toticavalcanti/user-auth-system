@@ -31,12 +31,12 @@ COPY --from=build /app/build /usr/share/nginx/html
 COPY frontend/react-auth/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copiar o script de entrada personalizado
-COPY frontend/react-auth/custom-entrypoint.sh /custom-entrypoint.sh
-RUN chmod +x /custom-entrypoint.sh
+COPY frontend/react-auth/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # Expor a porta 80 para o Nginx
 EXPOSE 80
 
 # Usar o script de entrada personalizado para substituir variáveis e iniciar o Nginx
-ENTRYPOINT ["/custom-entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
