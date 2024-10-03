@@ -18,5 +18,5 @@ else
     echo "Falha ao criar o arquivo config.js."
 fi
 
-# Por fim, chamar o script de entrada original do Nginx
+# Executar o script original de entrada do Nginx
 exec /docker-entrypoint.sh "$@"
