@@ -1,48 +1,61 @@
-import React, { useState, SyntheticEvent } from 'react';
+import React, { useState, SyntheticEvent, useEffect } from 'react';
 import axios from 'axios';
 import { Navigate, Link } from 'react-router-dom';
+
+const getApiUrl = () => {
+  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
+  console.log("API URL:", url);
+  return url;
+};
 
 const Login: React.FC<{ setLogin: (loggedIn: boolean) => void }> = ({ setLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [redirect, setRedirect] = useState(false);
+  const [apiUrl, setApiUrl] = useState('');
+
+  useEffect(() => {
+    const url = getApiUrl();
+    setApiUrl(url);
+    console.log("Initial API URL:", url);
+  }, []);
 
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
 
-    // Using environment variable for API URL
-    //const apiURL = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
-    const apiURL = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL
-
-    console.log("REACT_APP_API_URL:", window._env_.REACT_APP_API_URL)
-    console.log("Submitting login request to:", apiURL); // Verifique se a URL está correta
+    console.log("Submitting login request to:", apiUrl);
 
     try {
-      const response = await axios.post(`${apiURL}/api/login`, {
+      const response = await axios.post(`${apiUrl}/api/login`, {
         email,
         password,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      console.log("Response received:", response.data); // Verifique se a resposta está correta
+      console.log("Response received:", response.data);
 
       if (response.status === 200) {
-        localStorage.setItem('jwt', response.data.jwt); // Armazene o JWT
+        localStorage.setItem('jwt', response.data.jwt);
         setLogin(true);
-        setRedirect(true); // Redirecione após login bem-sucedido
+        setRedirect(true);
       } else {
         console.error("Login failed with status:", response.status);
       }
     } catch (error: any) {
+      console.error("Full error object:", error);
       if (error.response) {
-        // O servidor retornou uma resposta com erro (ex: 4xx ou 5xx)
-        console.error("Erro de resposta do servidor:", error.response.data);
+        console.error("Server response error:", error.response.data);
+        console.error("Status code:", error.response.status);
+        console.error("Headers:", error.response.headers);
       } else if (error.request) {
-        // A requisição foi feita, mas o servidor não respondeu
-        console.error("Erro de requisição:", error.request);
+        console.error("Request error:", error.request);
       } else {
-        // Algo aconteceu ao configurar a requisição
-        console.error("Erro desconhecido:", error.message);
+        console.error("Error:", error.message);
       }
+      console.error("Error config:", error.config);
     }
   };
 
@@ -67,8 +80,10 @@ const Login: React.FC<{ setLogin: (loggedIn: boolean) => void }> = ({ setLogin }
         </div>
       </div>
       <button className="form-signin btn btn-primary w-100 py-2" type="submit">Sign in</button>
-      <p className="mt-5 mb-3 text-body-secondary">&copy; 2017–2024</p>
+      <p className="mt-5 mb-3 text-body-secondary">© 2024</p>
+      <p>Current API URL: {apiUrl}</p>
     </form>
   );
 }
+
 export default Login;

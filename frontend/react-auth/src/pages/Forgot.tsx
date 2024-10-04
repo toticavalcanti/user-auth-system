@@ -54,7 +54,7 @@ const Forgot = () => {
       <button className="form-signin btn btn-primary w-100 py-2" type="submit">
         Send Email
       </button>
-      <p className="mt-5 mb-3 text-body-secondary">© 2017–2024</p>
+      <p className="mt-5 mb-3 text-body-secondary">© 2024</p>
     </form>
   );
 };

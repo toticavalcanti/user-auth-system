@@ -1,12 +1,25 @@
-import React, { useState, SyntheticEvent } from "react";
+import React, { useState, SyntheticEvent, useEffect } from "react";
 import axios from "axios";
 import { Navigate, useParams } from "react-router-dom";
+
+const getApiUrl = () => {
+  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
+  console.log("API URL:", url);
+  return url;
+};
 
 const Reset = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [redirect, setRedirect] = useState(false);
+  const [apiUrl, setApiUrl] = useState('');
   const { token } = useParams<{ token: string }>();
+
+  useEffect(() => {
+    const url = getApiUrl();
+    setApiUrl(url);
+    console.log("Initial API URL:", url);
+  }, []);
 
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
@@ -16,27 +29,34 @@ const Reset = () => {
       return;
     }
 
-    try {
-      // Use a consistent base URL, defined as an environment variable or fallback to localhostt
-      // Using environment variable for API URL
-      // const apiURL =
-      //   window._env_?.REACT_APP_API_URL ||
-      //   process.env.REACT_APP_API_URL ||
-      //   "http://localhost:3000";
-      const apiURL = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL
-      console.log("REACT_APP_API_URL:", window._env_.REACT_APP_API_URL);
-      console.log("Submitting login request to:", apiURL); // Verifique se a URL está correta
+    console.log("Submitting password reset request to:", apiUrl);
 
-      // Make a POST request to the /api/reset route with the necessary data
-      await axios.post(`${apiURL}/api/reset`, {
+    try {
+      // POST request to the /api/reset route with the necessary data
+      await axios.post(`${apiUrl}/api/reset`, {
         token,
         password,
         confirm_password: confirmPassword,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       setRedirect(true);
-    } catch (e: any) {
-      console.error("Failed to reset password:", e.response?.data || e.message);
+    } catch (error: any) {
+      console.error("Failed to reset password:", error.response ? error.response.data : error.message);
+
+      if (error.response) {
+        console.error("Server response error:", error.response.data);
+        console.error("Status code:", error.response.status);
+        console.error("Headers:", error.response.headers);
+      } else if (error.request) {
+        console.error("Request error:", error.request);
+      } else {
+        console.error("Error:", error.message);
+      }
+      console.error("Error config:", error.config);
     }
   };
 
@@ -69,7 +89,8 @@ const Reset = () => {
       <button className="form-signin btn btn-primary w-100 py-2" type="submit">
         Reset Password
       </button>
-      <p className="mt-5 mb-3 text-body-secondary">© 2017–2024</p>
+      <p className="mt-5 mb-3 text-body-secondary">© 2024</p>
+      <p>Current API URL: {apiUrl}</p>
     </form>
   );
 };
