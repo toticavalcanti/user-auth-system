@@ -3,9 +3,8 @@ import axios from 'axios';
 import { Navigate, Link } from 'react-router-dom';
 
 const getApiUrl = () => {
-  //const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
+  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
   //const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
-  const url = 'http://206.189.253.145/api';
   console.log("API URL:", url);
   return url;
 };
@@ -24,8 +23,8 @@ const Login: React.FC<{ setLogin: (loggedIn: boolean) => void }> = ({ setLogin }
 
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
-
-    console.log("Submitting login request to:", apiUrl);
+    console.log("Valor de window._env_:", window._env_);
+    console.log("Submetendo o request de login para:", apiUrl);
 
     try {
       const response = await axios.post(`${apiUrl}/api/login`, {

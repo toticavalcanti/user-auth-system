@@ -3,9 +3,9 @@ import axios from "axios";
 import { Navigate, useParams } from "react-router-dom";
 
 const getApiUrl = () => {
-  //const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
+  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
   //const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
-  const url = 'http://206.189.253.145/api';
+  
   console.log("API URL:", url);
   return url;
 };
