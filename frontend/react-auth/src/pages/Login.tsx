@@ -3,7 +3,8 @@ import axios from 'axios';
 import { Navigate, Link } from 'react-router-dom';
 
 const getApiUrl = () => {
-  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
+  //const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
+  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
   console.log("API URL:", url);
   return url;
 };
@@ -80,7 +81,7 @@ const Login: React.FC<{ setLogin: (loggedIn: boolean) => void }> = ({ setLogin }
         </div>
       </div>
       <button className="form-signin btn btn-primary w-100 py-2" type="submit">Sign in</button>
-      <p className="mt-5 mb-3 text-body-secondary">© 2024</p>
+      <p className="mt-5 mb-3 text-body-secondary">&copy; 2017–2024</p>
       <p>Current API URL: {apiUrl}</p>
     </form>
   );
