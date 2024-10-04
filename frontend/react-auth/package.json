@@ -29,6 +29,7 @@
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },
+    "proxy": "http://localhost:3000",
     "resolutions": {
         "rimraf": "^4.0.0"
     },
