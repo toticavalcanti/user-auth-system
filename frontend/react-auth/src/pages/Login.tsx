@@ -81,7 +81,7 @@ const Login: React.FC<{ setLogin: (loggedIn: boolean) => void }> = ({ setLogin }
         </div>
       </div>
       <button className="form-signin btn btn-primary w-100 py-2" type="submit">Sign in</button>
-      <p className="mt-5 mb-3 text-body-secondary">&copy; 2017–2024</p>
+      <p className="mt-5 mb-3 text-body-secondary">&copy; 2024</p>
       <p>Current API URL: {apiUrl}</p>
     </form>
   );
