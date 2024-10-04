@@ -35,7 +35,7 @@ resource "kubernetes_deployment" "auth_api" {
           # Variável de ambiente APP_URL
           env {
             name  = "APP_URL"
-            value = var.app_url
+            value = "${kubernetes_service.auth_ui.status[0].load_balancer[0].ingress[0].ip}"
           }
 
           # Variável de ambiente DB_DSN
