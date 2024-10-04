@@ -19,10 +19,11 @@ const Reset = () => {
     try {
       // Use a consistent base URL, defined as an environment variable or fallback to localhostt
       // Using environment variable for API URL
-      const apiURL =
-        window._env_?.REACT_APP_API_URL ||
-        process.env.REACT_APP_API_URL ||
-        "http://localhost:3000";
+      // const apiURL =
+      //   window._env_?.REACT_APP_API_URL ||
+      //   process.env.REACT_APP_API_URL ||
+      //   "http://localhost:3000";
+      const apiURL = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL
       console.log("REACT_APP_API_URL:", window._env_.REACT_APP_API_URL);
       console.log("Submitting login request to:", apiURL); // Verifique se a URL está correta
 
