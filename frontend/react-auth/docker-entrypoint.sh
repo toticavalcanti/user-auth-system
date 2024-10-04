@@ -22,5 +22,5 @@ else
     echo "Falha ao criar o arquivo config.js!"
 fi
 
-# Continuar com o processo de inicialização do nginx
-exec "$@"
+# Executar o config-overrides.sh e passar o controle para o comando original
+exec /usr/share/nginx/html/config-overrides.sh "$@"

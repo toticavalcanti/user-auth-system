@@ -34,9 +34,13 @@ COPY frontend/react-auth/nginx.conf /etc/nginx/conf.d/default.conf
 COPY frontend/react-auth/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
+# Copiar o novo script de configuração
+COPY frontend/react-auth/config-overrides.sh /usr/share/nginx/html/config-overrides.sh
+RUN chmod +x /usr/share/nginx/html/config-overrides.sh
+
 # Expor a porta 80 para o Nginx
 EXPOSE 80
 
 # Usar o script de entrada personalizado para substituir variáveis e iniciar o Nginx
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "/usr/share/nginx/html/config-overrides.sh && nginx -g 'daemon off;'"]
