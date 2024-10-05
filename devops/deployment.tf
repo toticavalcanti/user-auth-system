@@ -32,12 +32,6 @@ resource "kubernetes_deployment" "auth_api" {
             }
           }
 
-          # Variável de ambiente APP_URL
-          env {
-            name  = "APP_URL"
-            value = "${kubernetes_service.auth_ui.status[0].load_balancer[0].ingress[0].ip}"
-          }
-
           # Variável de ambiente DB_DSN
           env {
             name  = "DB_DSN"
@@ -45,7 +39,7 @@ resource "kubernetes_deployment" "auth_api" {
           }
 
           # Porta onde o backend escuta
-          port {
+          ports {
             container_port = 3000
           }
 
@@ -61,7 +55,7 @@ resource "kubernetes_deployment" "auth_api" {
             }
           }
 
-          # Readiness probe (opcional, descomentado se desejar usar)
+          # Readiness probe (opcional)
           # readiness_probe {
           #   http_get {
           #     path = "/health"
@@ -106,7 +100,7 @@ resource "kubernetes_deployment" "auth_ui" {
           }
 
           # Porta onde o frontend escuta
-          port {
+          ports {
             container_port = 80
           }
         }
@@ -125,7 +119,7 @@ resource "kubernetes_service" "auth_ui" {
       app = "auth-ui"
     }
     type = "LoadBalancer"
-    port {
+    ports {
       port        = 80   # Usando a porta 80 para o frontend
       target_port = 80
     }
@@ -142,7 +136,7 @@ resource "kubernetes_service" "auth_api" {
       app = "auth-api"
     }
     type = "ClusterIP"   # Backend é exposto internamente com ClusterIP
-    port {
+    ports {
       port        = 3000
       target_port = 3000
     }
