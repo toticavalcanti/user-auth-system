@@ -54,18 +54,25 @@ resource "kubernetes_deployment" "auth_api" {
               memory = "128Mi"
             }
           }
-
-          # Readiness probe (opcional)
-          # readiness_probe {
-          #   http_get {
-          #     path = "/health"
-          #     port = 3000
-          #   }
-          #   initial_delay_seconds = 10
-          #   period_seconds        = 5
-          # }
         }
       }
+    }
+  }
+}
+
+# Alterar o serviço do backend para LoadBalancer
+resource "kubernetes_service" "auth_api" {
+  metadata {
+    name = "auth-api-service"
+  }
+  spec {
+    selector = {
+      app = "auth-api"
+    }
+    type = "LoadBalancer"  # Alterado para LoadBalancer para expor publicamente
+    ports {
+      port        = 3000
+      target_port = 3000
     }
   }
 }
@@ -120,25 +127,25 @@ resource "kubernetes_service" "auth_ui" {
     }
     type = "LoadBalancer"
     ports {
-      port        = 80   # Usando a porta 80 para o frontend
+      port        = 80
       target_port = 80
     }
   }
 }
 
-# Serviço do Backend (ClusterIP)
-resource "kubernetes_service" "auth_api" {
+# Serviço do MySQL (ClusterIP, com IP fixo no cluster)
+resource "kubernetes_service" "mysql_service" {
   metadata {
-    name = "auth-api-service"
+    name = "mysql-service"
   }
   spec {
     selector = {
-      app = "auth-api"
+      app = "mysql"
     }
-    type = "ClusterIP"   # Backend é exposto internamente com ClusterIP
     ports {
-      port        = 3000
-      target_port = 3000
+      port        = 3306
+      target_port = 3306
     }
+    cluster_ip = "None"  # IP fixo para o MySQL no cluster
   }
 }

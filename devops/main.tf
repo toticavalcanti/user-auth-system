@@ -27,8 +27,3 @@ provider "kubernetes" {
   config_path    = "~/.kube/config"
   config_context = "do-nyc1-meu-cluster"
 }
-
-output "kubeconfig" {
-  value     = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].raw_config
-  sensitive = true
-}
