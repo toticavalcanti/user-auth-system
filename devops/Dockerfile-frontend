@@ -5,15 +5,11 @@ WORKDIR /app
 # Instalar dependências do sistema necessárias para npm
 RUN apk add --no-cache python3 make g++
 
-# Limpar cache npm e configurar dependências legadas
-RUN npm cache clean --force
-RUN npm config set legacy-peer-deps true
-
 # Copiar package.json e package-lock.json
 COPY frontend/react-auth/package*.json ./
 
-# Instalar dependências
-RUN npm ci --only=production --verbose
+# Instalar dependências com a flag legacy-peer-deps
+RUN npm ci --legacy-peer-deps --verbose
 
 # Copiar o resto dos arquivos do projeto
 COPY frontend/react-auth/ ./
@@ -43,4 +39,4 @@ EXPOSE 80
 
 # Usar o script de entrada personalizado para substituir variáveis e iniciar o Nginx
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["/bin/sh", "-c", "/usr/share/nginx/html/config-overrides.sh && nginx -g 'daemon off;'"]
+CMD ["nginx", "-g", "daemon off;"]
