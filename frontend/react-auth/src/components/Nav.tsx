@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import axios from "axios";
 import { Link } from "react-router-dom";
+
 const Nav = ({ user, setLogin }: { user: any, setLogin: (loggedIn: boolean) => void }) => {
   const logout = async () => {
     await axios.post('logout', {});
     setLogin(false);
   }
+
   let links;
-  if(user){
+  if (user) {
     links = (
       <ul className="navbar-nav ms-auto">
         <li className="nav-item">
           <Link className="nav-link" to="/" onClick={logout}>Logout</Link>
         </li>
       </ul>
-    )
+    );
   } else {
     links = (
       <ul className="navbar-nav ms-auto">
@@ -25,10 +27,12 @@ const Nav = ({ user, setLogin }: { user: any, setLogin: (loggedIn: boolean) => v
           <Link className="nav-link" to="/register">Register</Link>
         </li>
       </ul>
-    )
+    );
   }
+
   const [isNavCollapsed, setIsNavCollapsed] = useState(true);
   const handleNavCollapse = () => setIsNavCollapsed(!isNavCollapsed);
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container-fluid">
@@ -37,9 +41,7 @@ const Nav = ({ user, setLogin }: { user: any, setLogin: (loggedIn: boolean) => v
           <span className="navbar-toggler-icon"></span>
         </button>
         <div className={`${isNavCollapsed ? 'collapse' : ''} navbar-collapse`} id="navbarNav">
-          <ul className="navbar-nav ms-auto">
-            {links}
-          </ul>
+          {links}
         </div>
       </div>
     </nav>

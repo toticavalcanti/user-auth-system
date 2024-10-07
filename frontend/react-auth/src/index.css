@@ -1,5 +1,29 @@
-.App, #root {
+/* Ajustes no Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
-  position: absolute;
+  z-index: 1000; /* Mantém o navbar acima de outros elementos */
+}
+
+/* Adiciona padding ao conteúdo para evitar sobreposição */
+body {
+  padding-top: 56px; /* Altura do navbar */
+}
+
+.navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-dark .navbar-toggler-icon {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.navbar-nav .nav-link {
+  color: white;
+}
+
+.collapse.show {
+  display: block !important;
 }
