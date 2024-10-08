@@ -173,3 +173,4 @@ resource "kubernetes_service" "mysql_service" {
     }
     cluster_ip = "None"  # IP fixo para o MySQL no cluster
   }
+}
