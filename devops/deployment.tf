@@ -1,4 +1,4 @@
-# ConfigMap para o Nginx
+# Adicionar este bloco no início do arquivo
 resource "kubernetes_config_map" "nginx_config" {
   metadata {
     name = "nginx-config"
