@@ -1,3 +1,14 @@
+# ConfigMap para o Nginx
+resource "kubernetes_config_map" "nginx_config" {
+  metadata {
+    name = "nginx-config"
+  }
+
+  data = {
+    "nginx.conf" = file("${path.module}/../frontend/react-auth/nginx.conf")
+  }
+}
+
 # Backend Deployment
 resource "kubernetes_deployment" "auth_api" {
   metadata {
@@ -110,6 +121,20 @@ resource "kubernetes_deployment" "auth_ui" {
           port {
             container_port = 80
           }
+
+          # Volume mount para a configuração do Nginx
+          volume_mount {
+            name       = "nginx-config"
+            mount_path = "/etc/nginx/conf.d"
+          }
+        }
+
+        # Volume para a configuração do Nginx
+        volume {
+          name = "nginx-config"
+          config_map {
+            name = kubernetes_config_map.nginx_config.metadata[0].name
+          }
         }
       }
     }
@@ -148,4 +173,3 @@ resource "kubernetes_service" "mysql_service" {
     }
     cluster_ip = "None"  # IP fixo para o MySQL no cluster
   }
-}
