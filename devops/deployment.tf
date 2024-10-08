@@ -39,7 +39,7 @@ resource "kubernetes_deployment" "auth_api" {
           }
 
           # Porta onde o backend escuta
-          ports {
+          port {
             container_port = 3000
           }
 
@@ -70,7 +70,7 @@ resource "kubernetes_service" "auth_api" {
       app = "auth-api"
     }
     type = "LoadBalancer"  # Alterado para LoadBalancer para expor publicamente
-    ports {
+    port {
       port        = 3000
       target_port = 3000
     }
@@ -107,7 +107,7 @@ resource "kubernetes_deployment" "auth_ui" {
           }
 
           # Porta onde o frontend escuta
-          ports {
+          port {
             container_port = 80
           }
         }
@@ -126,7 +126,7 @@ resource "kubernetes_service" "auth_ui" {
       app = "auth-ui"
     }
     type = "LoadBalancer"
-    ports {
+    port {
       port        = 80
       target_port = 80
     }
@@ -142,7 +142,7 @@ resource "kubernetes_service" "mysql_service" {
     selector = {
       app = "mysql"
     }
-    ports {
+    port {
       port        = 3306
       target_port = 3306
     }
