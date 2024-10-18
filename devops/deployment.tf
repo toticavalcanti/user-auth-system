@@ -71,7 +71,7 @@ resource "kubernetes_deployment" "auth_api" {
   }
 }
 
-# Serviço do backend alterado para ClusterIP
+# Serviço do backend (ClusterIP)
 resource "kubernetes_service" "auth_api" {
   metadata {
     name = "auth-api-service"
@@ -80,7 +80,7 @@ resource "kubernetes_service" "auth_api" {
     selector = {
       app = "auth-api"
     }
-    type = "ClusterIP"  # Alterado para ClusterIP
+    type = "ClusterIP"
     port {
       port        = 3000
       target_port = 3000
@@ -114,7 +114,7 @@ resource "kubernetes_deployment" "auth_ui" {
           # Variável de ambiente para o frontend se comunicar com o backend
           env {
             name  = "REACT_APP_API_URL"
-            value = "http://auth-api-service:3000"
+            value = "/api"  # Alterado para usar o path relativo
           }
 
           # Porta onde o frontend escuta
@@ -141,7 +141,7 @@ resource "kubernetes_deployment" "auth_ui" {
   }
 }
 
-# Serviço do Frontend (LoadBalancer)
+# Serviço do Frontend (ClusterIP)
 resource "kubernetes_service" "auth_ui" {
   metadata {
     name = "auth-ui-service"
@@ -150,7 +150,7 @@ resource "kubernetes_service" "auth_ui" {
     selector = {
       app = "auth-ui"
     }
-    type = "LoadBalancer"
+    type = "ClusterIP"
     port {
       port        = 80
       target_port = 80
@@ -172,5 +172,47 @@ resource "kubernetes_service" "mysql_service" {
       target_port = 3306
     }
     cluster_ip = "None"  # IP fixo para o MySQL no cluster
+  }
+}
+
+# Ingress Resource
+resource "kubernetes_ingress_v1" "auth_ingress" {
+  metadata {
+    name = "auth-ingress"
+    annotations = {
+      "kubernetes.io/ingress.class" = "nginx"
+      "nginx.ingress.kubernetes.io/rewrite-target" = "/$1"
+    }
+  }
+
+  spec {
+    rule {
+      http {
+        path {
+          path = "/()(.*)$"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = kubernetes_service.auth_ui.metadata[0].name
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+        path {
+          path = "/api(/|$)(.*)"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = kubernetes_service.auth_api.metadata[0].name
+              port {
+                number = 3000
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
