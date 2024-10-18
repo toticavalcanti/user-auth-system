@@ -71,7 +71,7 @@ resource "kubernetes_deployment" "auth_api" {
   }
 }
 
-# Alterar o serviço do backend para LoadBalancer
+# Serviço do backend alterado para ClusterIP
 resource "kubernetes_service" "auth_api" {
   metadata {
     name = "auth-api-service"
@@ -80,7 +80,7 @@ resource "kubernetes_service" "auth_api" {
     selector = {
       app = "auth-api"
     }
-    type = "LoadBalancer"  # Alterado para LoadBalancer para expor publicamente
+    type = "ClusterIP"  # Alterado para ClusterIP
     port {
       port        = 3000
       target_port = 3000
