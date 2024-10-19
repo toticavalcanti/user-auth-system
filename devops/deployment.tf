@@ -1,14 +1,3 @@
-# Adicionar este bloco no início do arquivo
-resource "kubernetes_config_map" "nginx_config" {
-  metadata {
-    name = "nginx-config"
-  }
-
-  data = {
-    "nginx.conf" = file("${path.module}/../frontend/react-auth/nginx.conf")
-  }
-}
-
 # Backend Deployment
 resource "kubernetes_deployment" "auth_api" {
   metadata {
@@ -114,26 +103,12 @@ resource "kubernetes_deployment" "auth_ui" {
           # Variável de ambiente para o frontend se comunicar com o backend
           env {
             name  = "REACT_APP_API_URL"
-            value = "/api"  # Alterado para usar o path relativo
+            value = "/api"
           }
 
           # Porta onde o frontend escuta
           port {
             container_port = 80
-          }
-
-          # Volume mount para a configuração do Nginx
-          volume_mount {
-            name       = "nginx-config"
-            mount_path = "/etc/nginx/conf.d"
-          }
-        }
-
-        # Volume para a configuração do Nginx
-        volume {
-          name = "nginx-config"
-          config_map {
-            name = kubernetes_config_map.nginx_config.metadata[0].name
           }
         }
       }
@@ -171,7 +146,76 @@ resource "kubernetes_service" "mysql_service" {
       port        = 3306
       target_port = 3306
     }
-    cluster_ip = "None"  # IP fixo para o MySQL no cluster
+    cluster_ip = "None"
+  }
+}
+
+# Persistent Volume
+resource "kubernetes_persistent_volume" "mysql_pv" {
+  metadata {
+    name = "mysql-pv"
+  }
+  spec {
+    capacity = {
+      storage = "1Gi"
+    }
+    access_modes = ["ReadWriteOnce"]
+    persistent_volume_reclaim_policy = "Retain"
+    storage_class_name = "manual"
+    host_path {
+      path = "/mnt/data"
+    }
+  }
+}
+
+# Persistent Volume Claim
+resource "kubernetes_persistent_volume_claim" "mysql_pvc" {
+  metadata {
+    name = "mysql-pvc"
+  }
+  spec {
+    access_modes = ["ReadWriteOnce"]
+    resources {
+      requests = {
+        storage = "1Gi"
+      }
+    }
+    storage_class_name = "manual"
+  }
+}
+
+# MySQL Pod
+resource "kubernetes_pod" "mysql_pod" {
+  metadata {
+    name = "mysql-pod"
+    labels = {
+      app = "mysql"
+    }
+  }
+  spec {
+    containers {
+      name  = "mysql"
+      image = "mysql:5.7"
+      env {
+        name = "MYSQL_ROOT_PASSWORD"
+        value_from {
+          secret_key_ref {
+            name = "mysql-secret"
+            key  = "mysql-root-password"
+          }
+        }
+      }
+      volume_mounts {
+        mount_path = "/var/lib/mysql"
+        name       = "mysql-storage"
+      }
+    }
+    volumes {
+      name = "mysql-storage"
+      persistent_volume_claim {
+        claim_name = "mysql-pvc"
+      }
+    }
   }
 }
 
@@ -184,7 +228,6 @@ resource "kubernetes_ingress_v1" "auth_ingress" {
       "nginx.ingress.kubernetes.io/rewrite-target" = "/$1"
     }
   }
-
   spec {
     rule {
       http {
@@ -214,5 +257,15 @@ resource "kubernetes_ingress_v1" "auth_ingress" {
         }
       }
     }
+  }
+}
+
+# Secret for MySQL
+resource "kubernetes_secret" "mysql_secret" {
+  metadata {
+    name = "mysql-secret"
+  }
+  data = {
+    mysql-root-password = base64encode("yourpassword")
   }
 }
