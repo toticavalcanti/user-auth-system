@@ -14,7 +14,7 @@ provider "digitalocean" {
 resource "digitalocean_kubernetes_cluster" "meu_cluster" {
   name    = "meu-cluster"
   region  = "nyc1"
-  version = "1.31.1-do.2"
+  version = "1.31.1-do.3"
 
   node_pool {
     name       = "default-pool"
