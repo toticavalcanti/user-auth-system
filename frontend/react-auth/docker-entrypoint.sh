@@ -10,6 +10,7 @@ echo "Valor de REACT_APP_API_URL: '${REACT_APP_API_URL}'"
 # Criar o arquivo config.js com as variáveis de ambiente
 echo "Criando o arquivo /usr/share/nginx/html/config.js..."
 cat <<EOL > /usr/share/nginx/html/config.js
+
 window._env_ = {
   REACT_APP_API_URL: '${REACT_APP_API_URL}'
 };
@@ -20,7 +21,12 @@ if [ -f /usr/share/nginx/html/config.js ]; then
     echo "Arquivo config.js criado com sucesso!"
 else
     echo "Falha ao criar o arquivo config.js!"
+    exit 1
 fi
 
-# Executar o config-overrides.sh e passar o controle para o comando original
-exec /usr/share/nginx/html/config-overrides.sh "$@"
+# Executar o config-overrides.sh (se necessário) e depois iniciar o NGINX
+echo "Executando o script config-overrides.sh..."
+/usr/share/nginx/html/config-overrides.sh
+
+# Passa o controle para o comando original (iniciar o NGINX)
+exec "$@"

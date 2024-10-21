@@ -1,14 +1,21 @@
 variable "do_token" {
-  description = "Token de acesso para a API da DigitalOcean"
   type        = string
+  sensitive   = true
+  description = "Token de acesso para a API da DigitalOcean"
 }
 
 variable "gmail_username" {
-  description = "Endereço do Gmail para enviar emails"
   type        = string
+  description = "Endereço do Gmail para enviar emails"
 }
 
 variable "gmail_password" {
+  type        = string
+  sensitive   = true
   description = "Senha do Gmail ou Senha de App"
+}
+
+variable "mysql_root_password" {
+  description = "Senha do root para o MySQL"
   type        = string
 }
