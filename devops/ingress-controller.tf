@@ -58,7 +58,6 @@ resource "kubernetes_cluster_role" "nginx_ingress_cluster_role" {
     verbs      = ["update"]
   }
 
-  # Adicionando permissão para acessar pods
   rule {
     api_groups = [""]
     resources  = ["pods"]

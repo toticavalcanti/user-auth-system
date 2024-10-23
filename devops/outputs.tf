@@ -39,7 +39,7 @@ output "mysql_connection_string" {
 
 # Ingress
 output "ingress_name" {
-  value       = kubernetes_ingress_v1.auth_ingress.metadata[0].name
+  value       = kubernetes_service.nginx_ingress.metadata[0].name  # Nome corrigido
   description = "The name of the Ingress resource"
 }
 
@@ -61,7 +61,7 @@ output "nginx_ingress_load_balancer_ip" {
 
 # Application URL
 output "application_url" {
-  value       = try(
+  value = try(
     "http://${kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip}",
     "Pending - External IP not yet assigned"
   )

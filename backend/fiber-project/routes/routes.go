@@ -17,7 +17,7 @@ func Setup(app *fiber.App) {
 	api.Post("/reset", controllers.Reset)
 
 	// Health check route
-	app.Get("/health", func(c *fiber.Ctx) error {
+	api.Get("/health", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
 	})
 }

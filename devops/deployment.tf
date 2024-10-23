@@ -228,7 +228,7 @@ resource "kubernetes_pod" "mysql_pod" {
   metadata {
     name = "mysql-pod"
     labels = {
-      app = "mysql"
+      app = "mysql-pod"
     }
   }
   spec {
@@ -236,12 +236,23 @@ resource "kubernetes_pod" "mysql_pod" {
       name  = "mysql"
       image = "mysql:5.7"
       env {
+        # Referenciando a senha do Secret como no YAML original
         name = "MYSQL_ROOT_PASSWORD"
         value_from {
           secret_key_ref {
             name = "mysql-secret"
             key  = "mysql-root-password"
           }
+        }
+      }
+      resources {
+        limits = {
+          memory = "512Mi"
+          cpu    = "500m"
+        }
+        requests = {
+          memory = "256Mi"
+          cpu    = "250m"
         }
       }
       volume_mount {
@@ -261,53 +272,13 @@ resource "kubernetes_pod" "mysql_pod" {
   }
 }
 
-# Ingress Resource
-resource "kubernetes_ingress_v1" "auth_ingress" {
-  metadata {
-    name = "auth-ingress"
-    annotations = {
-      "kubernetes.io/ingress.class" = "nginx"
-      "nginx.ingress.kubernetes.io/rewrite-target" = "/$1"
-    }
-  }
-  spec {
-    rule {
-      http {
-        path {
-          path = "/()(.*)$"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = kubernetes_service.auth_ui.metadata[0].name
-              port {
-                number = 80
-              }
-            }
-          }
-        }
-        path {
-          path = "/api(/|$)(.*)"
-          path_type = "Prefix"
-          backend {
-            service {
-              name = kubernetes_service.auth_api.metadata[0].name
-              port {
-                number = 3000
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-# Secret for MySQL
+# Secret for MySQL corrigido (sem base64encode, usando texto simples)
 resource "kubernetes_secret" "mysql_secret" {
   metadata {
     name = "mysql-secret"
   }
   data = {
-    mysql-root-password = base64encode(var.mysql_root_password)
+    # Kubernetes codificará automaticamente o Secret
+    mysql-root-password = var.mysql_root_password
   }
 }
