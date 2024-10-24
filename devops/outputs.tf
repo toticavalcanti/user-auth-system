@@ -37,32 +37,10 @@ output "mysql_connection_string" {
   description = "MySQL connection string (sensitive)"
 }
 
-# Ingress
-output "ingress_name" {
-  value       = kubernetes_service.nginx_ingress.metadata[0].name  # Nome corrigido
-  description = "The name of the Ingress resource"
-}
-
-# NGINX Ingress Controller
-output "nginx_ingress_namespace" {
-  value       = kubernetes_namespace.ingress_nginx.metadata[0].name
-  description = "The namespace where the NGINX Ingress Controller is deployed"
-}
-
-output "nginx_ingress_service_name" {
-  value       = kubernetes_service.nginx_ingress.metadata[0].name
-  description = "The name of the NGINX Ingress Controller service"
-}
-
-output "nginx_ingress_load_balancer_ip" {
-  value       = try(kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "Pending")
-  description = "The external IP of the load balancer for the NGINX Ingress Controller (if available)"
-}
-
 # Application URL
 output "application_url" {
   value = try(
-    "http://${kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip}",
+    "http://${kubernetes_service.auth_ui.status[0].load_balancer[0].ingress[0].ip}",
     "Pending - External IP not yet assigned"
   )
   description = "The URL to access the application (if available)"

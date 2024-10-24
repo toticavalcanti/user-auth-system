@@ -27,13 +27,11 @@ resource "digitalocean_kubernetes_cluster" "meu_cluster" {
     node_count = 2
   }
 
-  # Provisioner para rodar o comando doctl após a criação do cluster
   provisioner "local-exec" {
     command = "echo Iniciando kubeconfig... && doctl kubernetes cluster kubeconfig save meu-cluster && echo Kubeconfig salvo com sucesso!"
   }
 }
 
-# Provedor Kubernetes que usará o kubeconfig atualizado pelo doctl
 provider "kubernetes" {
   config_path    = "~/.kube/config"
   config_context = "do-nyc1-meu-cluster"

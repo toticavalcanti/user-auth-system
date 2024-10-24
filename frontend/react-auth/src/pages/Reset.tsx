@@ -3,7 +3,7 @@ import axios from "axios";
 import { Navigate, useParams } from "react-router-dom";
 
 const getApiUrl = () => {
-  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
+  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '';
   //const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
   
   console.log("API URL:", url);

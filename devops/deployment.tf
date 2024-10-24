@@ -1,4 +1,4 @@
-# Secret for MySQL
+# MySQL Resources
 resource "kubernetes_secret" "mysql_secret" {
   metadata {
     name = "mysql-secret"
@@ -8,41 +8,50 @@ resource "kubernetes_secret" "mysql_secret" {
   }
 }
 
-# Persistent Volume
+# Persistent Volume para MySQL
 resource "kubernetes_persistent_volume" "mysql_pv" {
   metadata {
     name = "mysql-pv"
+    labels = {
+      type = "local"
+      app  = "mysql"
+    }
   }
 
   spec {
     capacity = {
-      storage = "1Gi"
+      storage = "5Gi"
     }
     access_modes = ["ReadWriteOnce"]
-    persistent_volume_reclaim_policy = "Retain"
     storage_class_name = "manual"
+    persistent_volume_reclaim_policy = "Retain"
 
     persistent_volume_source {
       host_path {
         path = "/mnt/data"
+        type = "DirectoryOrCreate"
       }
     }
   }
 }
 
-# Persistent Volume Claim
+# Persistent Volume Claim para MySQL
 resource "kubernetes_persistent_volume_claim" "mysql_pvc" {
   metadata {
     name = "mysql-pvc"
+    labels = {
+      app = "mysql"
+    }
   }
   spec {
     access_modes = ["ReadWriteOnce"]
     resources {
       requests = {
-        storage = "1Gi"
+        storage = "5Gi"
       }
     }
     storage_class_name = "manual"
+    volume_name = kubernetes_persistent_volume.mysql_pv.metadata[0].name
   }
 
   depends_on = [kubernetes_persistent_volume.mysql_pv]
@@ -52,6 +61,9 @@ resource "kubernetes_persistent_volume_claim" "mysql_pvc" {
 resource "kubernetes_deployment" "mysql" {
   metadata {
     name = "mysql"
+    labels = {
+      app = "mysql"
+    }
   }
   spec {
     replicas = 1
@@ -72,20 +84,15 @@ resource "kubernetes_deployment" "mysql" {
           image = "mysql:5.7"
           
           env {
-            name = "MYSQL_ROOT_PASSWORD"
-            value_from {
-              secret_key_ref {
-                name = "mysql-secret"
-                key  = "mysql-root-password"
-              }
-            }
+            name  = "MYSQL_ROOT_PASSWORD"
+            value = var.mysql_root_password
           }
 
           env {
             name  = "MYSQL_DATABASE"
             value = "mysql"
           }
-          
+
           resources {
             limits = {
               memory = "512Mi"
@@ -99,36 +106,35 @@ resource "kubernetes_deployment" "mysql" {
           
           port {
             container_port = 3306
+            name = "mysql"
           }
           
           volume_mount {
+            name       = "mysql-persistent-storage"
             mount_path = "/var/lib/mysql"
-            name       = "mysql-storage"
           }
 
           readiness_probe {
-            exec {
-              command = ["mysqladmin", "ping", "-h", "localhost"]
+            tcp_socket {
+              port = 3306
             }
-            initial_delay_seconds = 30
+            initial_delay_seconds = 15
             period_seconds       = 10
-            timeout_seconds     = 5
           }
 
           liveness_probe {
-            exec {
-              command = ["mysqladmin", "ping", "-h", "localhost"]
+            tcp_socket {
+              port = 3306
             }
-            initial_delay_seconds = 30
+            initial_delay_seconds = 20
             period_seconds       = 10
-            timeout_seconds     = 5
           }
         }
 
         volume {
-          name = "mysql-storage"
+          name = "mysql-persistent-storage"
           persistent_volume_claim {
-            claim_name = "mysql-pvc"
+            claim_name = kubernetes_persistent_volume_claim.mysql_pvc.metadata[0].name
           }
         }
       }
@@ -136,7 +142,6 @@ resource "kubernetes_deployment" "mysql" {
   }
 
   depends_on = [
-    kubernetes_secret.mysql_secret,
     kubernetes_persistent_volume_claim.mysql_pvc
   ]
 }
@@ -145,6 +150,9 @@ resource "kubernetes_deployment" "mysql" {
 resource "kubernetes_service" "mysql_service" {
   metadata {
     name = "mysql-service"
+    labels = {
+      app = "mysql"
+    }
   }
   spec {
     selector = {
@@ -154,16 +162,18 @@ resource "kubernetes_service" "mysql_service" {
     port {
       port        = 3306
       target_port = 3306
+      name        = "mysql"
     }
   }
-
-  depends_on = [kubernetes_deployment.mysql]
 }
 
 # Backend Deployment
 resource "kubernetes_deployment" "auth_api" {
   metadata {
     name = "auth-api"
+    labels = {
+      app = "auth-api"
+    }
   }
   spec {
     replicas = 1
@@ -182,10 +192,7 @@ resource "kubernetes_deployment" "auth_api" {
         init_container {
           name  = "wait-for-mysql"
           image = "busybox:1.28"
-          command = [
-            "sh", "-c",
-            "until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;"
-          ]
+          command = ["sh", "-c", "until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;"]
         }
 
         container {
@@ -193,22 +200,18 @@ resource "kubernetes_deployment" "auth_api" {
           image = "toticavalcanti/fiber-auth-api:v1.0"
 
           env {
-            name = "MYSQL_ROOT_PASSWORD"
-            value_from {
-              secret_key_ref {
-                name = "mysql-secret"
-                key  = "mysql-root-password"
-              }
-            }
+            name  = "MYSQL_ROOT_PASSWORD"
+            value = var.mysql_root_password
           }
 
           env {
             name  = "DB_DSN"
-            value = "root:${var.mysql_root_password}@tcp(mysql-service:3306)/mysql"
+            value = "root:${var.mysql_root_password}@tcp(mysql-service:3306)/mysql?parseTime=true"
           }
 
           port {
             container_port = 3000
+            name = "http"
           }
 
           resources {
@@ -224,20 +227,20 @@ resource "kubernetes_deployment" "auth_api" {
 
           readiness_probe {
             http_get {
-              path = "/health"
+              path = "/api/health"
               port = 3000
             }
-            initial_delay_seconds = 10
-            period_seconds        = 5
+            initial_delay_seconds = 15
+            period_seconds       = 10
           }
 
           liveness_probe {
             http_get {
-              path = "/health"
+              path = "/api/health"
               port = 3000
             }
-            initial_delay_seconds = 15
-            period_seconds        = 10
+            initial_delay_seconds = 20
+            period_seconds       = 10
           }
         }
       }
@@ -254,6 +257,9 @@ resource "kubernetes_deployment" "auth_api" {
 resource "kubernetes_service" "auth_api" {
   metadata {
     name = "auth-api-service"
+    labels = {
+      app = "auth-api"
+    }
   }
   spec {
     selector = {
@@ -263,16 +269,18 @@ resource "kubernetes_service" "auth_api" {
     port {
       port        = 3000
       target_port = 3000
+      name        = "http"
     }
   }
-
-  depends_on = [kubernetes_deployment.auth_api]
 }
 
 # Frontend Deployment
 resource "kubernetes_deployment" "auth_ui" {
   metadata {
     name = "auth-ui"
+    labels = {
+      app = "auth-ui"
+    }
   }
   spec {
     replicas = 1
@@ -299,6 +307,7 @@ resource "kubernetes_deployment" "auth_ui" {
 
           port {
             container_port = 80
+            name = "http"
           }
 
           readiness_probe {
@@ -307,7 +316,7 @@ resource "kubernetes_deployment" "auth_ui" {
               port = 80
             }
             initial_delay_seconds = 10
-            period_seconds        = 5
+            period_seconds       = 5
           }
 
           liveness_probe {
@@ -316,7 +325,18 @@ resource "kubernetes_deployment" "auth_ui" {
               port = 80
             }
             initial_delay_seconds = 15
-            period_seconds        = 10
+            period_seconds       = 10
+          }
+
+          resources {
+            limits = {
+              cpu    = "200m"
+              memory = "256Mi"
+            }
+            requests = {
+              cpu    = "100m"
+              memory = "128Mi"
+            }
           }
         }
       }
@@ -330,6 +350,9 @@ resource "kubernetes_deployment" "auth_ui" {
 resource "kubernetes_service" "auth_ui" {
   metadata {
     name = "auth-ui-service"
+    labels = {
+      app = "auth-ui"
+    }
   }
   spec {
     selector = {
@@ -339,8 +362,7 @@ resource "kubernetes_service" "auth_ui" {
     port {
       port        = 80
       target_port = 80
+      name        = "http"
     }
   }
-
-  depends_on = [kubernetes_deployment.auth_ui]
 }

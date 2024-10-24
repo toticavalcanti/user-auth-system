@@ -2,7 +2,7 @@ import React, { useState, SyntheticEvent, useEffect } from 'react';
 import axios, { AxiosError } from 'axios';
 
 const getApiUrl = () => {
-  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '/api';
+  const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || '';
   //const url = window._env_?.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
   console.log("API URL:", url);
