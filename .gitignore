@@ -25,6 +25,12 @@ backend/**/*.exe
 backend/**/*.out
 backend/**/*.log
 
+**/.env
+**/.env.local
+**/.env.production
+**/.env.development
+**/.env.*
+
 # Ignorar diretórios e arquivos criados pelo Terraform
 .terraform/
 *.tfstate
