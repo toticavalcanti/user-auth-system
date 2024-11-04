@@ -1,0 +1,67 @@
+html,
+body {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
+/* Corrige o Navbar para ficar no topo e com largura completa */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* Mantém o navbar acima de outros elementos */
+}
+
+/* Adiciona padding ao conteúdo abaixo do navbar para evitar sobreposição */
+body {
+  padding-top: 56px; /* Altura do navbar */
+}
+
+.navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-dark .navbar-toggler-icon {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.navbar-nav .nav-link {
+  color: white; /* Mantém a cor branca para links do menu */
+}
+
+.collapse.show {
+  display: block !important;
+}
+
+/* Estilo para o formulário */
+.form-floating {
+  max-width: 330px;
+  padding: 15px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.form-signin {
+  margin-bottom: 15px;
+}
+
+/* Estilo para o botão */
+.form-signin button {
+  font-size: 18px;
+}
+
+/* Estilo para o rodapé */
+.text-body-secondary {
+  text-align: center;
+}
+
+/* Estilos responsivos para telas menores */
+@media (max-width: 768px) {
+  .form-floating {
+    max-width: 100%;
+  }
+}

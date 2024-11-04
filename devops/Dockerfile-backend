@@ -1,0 +1,23 @@
+# Nome do arquivo: Dockerfile-backend
+FROM golang:1.18 as builder
+WORKDIR /app
+
+# Copia os arquivos de gerenciamento de dependências primeiro para aproveitar o cache do Docker
+COPY backend/fiber-project/go.mod backend/fiber-project/go.sum ./
+
+# Baixa as dependências
+RUN go mod download
+
+# Copia o resto dos arquivos do projeto
+COPY backend/fiber-project/ ./
+
+# Compila o aplicativo
+RUN go build -o main .
+
+# Etapa final, usando uma imagem limpa para reduzir o tamanho da imagem final
+FROM gcr.io/distroless/base-debian10
+WORKDIR /app
+COPY --from=builder /app/main .
+
+# Comando para executar o aplicativo
+CMD ["./main"]
