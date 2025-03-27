@@ -7,13 +7,18 @@ body {
   margin: 10px 0;
 }
 
-/* Corrige o Navbar para ficar no topo e com largura completa */
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
+.App, #root {
   width: 100%;
-  z-index: 1000; /* Mantém o navbar acima de outros elementos */
+  height: 100%;
+  margin: 0; /* Remove qualquer margem adicional */
+  position: absolute;
+}
+
+nav.navbar {
+  margin: 0; /* Garante que o navbar não tenha margens */
+  padding: 0; /* Remove qualquer padding extra */
+  top: 0; /* Cola o navbar no topo */
+  width: 100%; /* Garante que o navbar ocupe toda a largura */
 }
 
 /* Adiciona padding ao conteúdo abaixo do navbar para evitar sobreposição */

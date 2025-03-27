@@ -9,34 +9,44 @@ import Forgot from "./pages/Forgot";
 import Reset from "./pages/Reset";
 import Nav from "./components/Nav";
 
+// Configurar axios com a URL base
+axios.defaults.baseURL = process.env.REACT_APP_API_URL + '/api';
+axios.defaults.withCredentials = true; // Importante para cookies
+
 function App() {
-  const [user, setUser] = useState(null); // State to store user data
+  const [user, setUser] = useState(null);
   const [login, setLogin] = useState(false);
+  const [loading, setLoading] = useState(true); // Adicionar loading state
 
   useEffect(() => {
     (async () => {
       try {
-        const response = await axios.get("user");
-        const user = response.data;
-        setUser(user);// Update the state with user data
+        const response = await axios.get("/user");
+        setUser(response.data);
       } catch (e) {
-        console.error("Error loading user data", e);
-        setUser(null); // Sets the user to null in case of error
+        if (process.env.REACT_APP_LOG_LEVEL === 'debug') {
+          console.error("Error loading user data", e);
+        }
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
     })();
   }, [login]);
 
+  if (loading) {
+    return <div>Loading...</div>; // Ou um componente de loading mais elaborado
+  }
+
   return (
     <div className="App">
       <Router>
-        <Nav user={user} setLogin={ () => setLogin(false) }/>
+        <Nav user={user} setLogin={() => setLogin(false)} />
         <Routes>
           <Route path="/login" element={<Login setLogin={() => setLogin(true)} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot" element={<Forgot />} />
           <Route path="/reset/:token" element={<Reset />} />
-
-          {/* Protected route that requires authentication */}
           <Route path="/" element={<Home user={user} />} />
         </Routes>
       </Router>
