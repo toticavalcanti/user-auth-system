@@ -9,11 +9,6 @@ output "auth_ui_service_type" {
   description = "The type of the Kubernetes service for the auth UI"
 }
 
-output "auth_ui_load_balancer_ip" {
-  value       = try(kubernetes_service.auth_ui.status[0].load_balancer[0].ingress[0].ip, "Pending")
-  description = "The external IP of the load balancer for the auth UI service (if available)"
-}
-
 # Backend API Service
 output "auth_api_service_name" {
   value       = kubernetes_service.auth_api.metadata[0].name
@@ -42,17 +37,32 @@ output "mysql_connection_string" {
   description = "MySQL connection string (sensitive)"
 }
 
-# Application URL (external access to frontend)
-output "application_url" {
+# Exibir IP/Host do Ingress
+output "ingress_controller_ip_or_hostname" {
   value = try(
-    "http://${kubernetes_service.auth_ui.status[0].load_balancer[0].ingress[0].ip}",
-    "Pending - External IP not yet assigned"
+    kubernetes_ingress_v1.app_ingress.status[0].load_balancer[0].ingress[0].ip,
+    try(
+      kubernetes_ingress_v1.app_ingress.status[0].load_balancer[0].ingress[0].hostname,
+      "Pending - External IP/Hostname not yet assigned"
+    )
   )
-  description = "The URL to access the application (if available)"
+  description = "O IP ou hostname atribuído ao Ingress pela DigitalOcean"
 }
 
-# API URL for frontend (internal communication)
+# URL final da aplicação via Ingress
+output "application_url" {
+  value = try(
+    "http://${kubernetes_ingress_v1.app_ingress.status[0].load_balancer[0].ingress[0].ip}",
+    try(
+      "http://${kubernetes_ingress_v1.app_ingress.status[0].load_balancer[0].ingress[0].hostname}",
+      "Pending - External IP/Hostname not yet assigned"
+    )
+  )
+  description = "URL para acessar a aplicação (frontend) via Ingress"
+}
+
+# URL interna para a API
 output "api_internal_url" {
   value = "http://${kubernetes_service.auth_api.metadata[0].name}:3000/api"
-  description = "The internal URL for the backend API service for use within the cluster"
+  description = "URL interna para a API"
 }

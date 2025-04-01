@@ -1,24 +1,24 @@
-# Data Source para o IP do LoadBalancer
-data "kubernetes_service" "auth_ui" {
+# Data Source para o IP do Ingress Controller
+data "kubernetes_service" "ingress_nginx" {
   metadata {
-    name = "auth-ui-service"
+    name      = "ingress-nginx-controller"
+    namespace = "default"
   }
-  depends_on = [kubernetes_service.auth_ui]
+  depends_on = [helm_release.ingress_nginx]
 }
-
-# Secret para credenciais do Gmail
+##################################
+# SECRETS
+##################################
 resource "kubernetes_secret" "gmail_credentials" {
   metadata {
     name = "gmail-credentials"
   }
-
   data = {
     username = var.gmail_username
     password = var.gmail_password
   }
 }
 
-# Secret para o MySQL
 resource "kubernetes_secret" "mysql_secret" {
   metadata {
     name = "mysql-secret"
@@ -28,7 +28,9 @@ resource "kubernetes_secret" "mysql_secret" {
   }
 }
 
-# Persistent Volume para MySQL
+##################################
+# VOLUMES
+##################################
 resource "kubernetes_persistent_volume" "mysql_pv" {
   metadata {
     name = "mysql-pv"
@@ -37,13 +39,12 @@ resource "kubernetes_persistent_volume" "mysql_pv" {
       app  = "mysql"
     }
   }
-
   spec {
     capacity = {
       storage = "5Gi"
     }
-    access_modes = ["ReadWriteOnce"]
-    storage_class_name = "manual"
+    access_modes                     = ["ReadWriteOnce"]
+    storage_class_name               = "manual"
     persistent_volume_reclaim_policy = "Retain"
 
     persistent_volume_source {
@@ -55,7 +56,6 @@ resource "kubernetes_persistent_volume" "mysql_pv" {
   }
 }
 
-# Persistent Volume Claim para MySQL
 resource "kubernetes_persistent_volume_claim" "mysql_pvc" {
   metadata {
     name = "mysql-pvc"
@@ -71,13 +71,16 @@ resource "kubernetes_persistent_volume_claim" "mysql_pvc" {
       }
     }
     storage_class_name = "manual"
-    volume_name = kubernetes_persistent_volume.mysql_pv.metadata[0].name
+    volume_name        = kubernetes_persistent_volume.mysql_pv.metadata[0].name
   }
-
-  depends_on = [kubernetes_persistent_volume.mysql_pv]
+  depends_on = [
+    kubernetes_persistent_volume.mysql_pv
+  ]
 }
 
-# MySQL Deployment
+##################################
+# MYSQL: DEPLOYMENT E SERVICE
+##################################
 resource "kubernetes_deployment" "mysql" {
   metadata {
     name = "mysql"
@@ -102,7 +105,7 @@ resource "kubernetes_deployment" "mysql" {
         container {
           name  = "mysql"
           image = "mysql:5.7"
-          
+
           env {
             name  = "MYSQL_ROOT_PASSWORD"
             value = var.mysql_root_password
@@ -123,12 +126,12 @@ resource "kubernetes_deployment" "mysql" {
               cpu    = "250m"
             }
           }
-          
+
           port {
             container_port = 3306
-            name = "mysql"
+            name           = "mysql"
           }
-          
+
           volume_mount {
             name       = "mysql-persistent-storage"
             mount_path = "/var/lib/mysql"
@@ -139,7 +142,7 @@ resource "kubernetes_deployment" "mysql" {
               port = 3306
             }
             initial_delay_seconds = 15
-            period_seconds       = 10
+            period_seconds        = 10
           }
 
           liveness_probe {
@@ -147,7 +150,7 @@ resource "kubernetes_deployment" "mysql" {
               port = 3306
             }
             initial_delay_seconds = 20
-            period_seconds       = 10
+            period_seconds        = 10
           }
         }
 
@@ -160,13 +163,9 @@ resource "kubernetes_deployment" "mysql" {
       }
     }
   }
-
-  depends_on = [
-    kubernetes_persistent_volume_claim.mysql_pvc
-  ]
+  depends_on = [kubernetes_persistent_volume_claim.mysql_pvc]
 }
 
-# MySQL Service
 resource "kubernetes_service" "mysql_service" {
   metadata {
     name = "mysql-service"
@@ -187,7 +186,9 @@ resource "kubernetes_service" "mysql_service" {
   }
 }
 
-# Backend Deployment
+##################################
+# BACKEND: DEPLOYMENT E SERVICE
+##################################
 resource "kubernetes_deployment" "auth_api" {
   metadata {
     name = "auth-api"
@@ -212,7 +213,10 @@ resource "kubernetes_deployment" "auth_api" {
         init_container {
           name  = "wait-for-mysql"
           image = "busybox:1.28"
-          command = ["sh", "-c", "until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;"]
+          command = [
+            "sh", "-c",
+            "until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;"
+          ]
         }
 
         container {
@@ -230,7 +234,7 @@ resource "kubernetes_deployment" "auth_api" {
           }
 
           env {
-            name  = "GMAIL_USERNAME"
+            name = "GMAIL_USERNAME"
             value_from {
               secret_key_ref {
                 name = kubernetes_secret.gmail_credentials.metadata[0].name
@@ -240,7 +244,7 @@ resource "kubernetes_deployment" "auth_api" {
           }
 
           env {
-            name  = "GMAIL_PASSWORD"
+            name = "GMAIL_PASSWORD"
             value_from {
               secret_key_ref {
                 name = kubernetes_secret.gmail_credentials.metadata[0].name
@@ -249,14 +253,15 @@ resource "kubernetes_deployment" "auth_api" {
             }
           }
 
+          # Se precisar, use para alguma lógica interna:
           env {
             name  = "APP_URL"
-            value = "http://${data.kubernetes_service.auth_ui.status[0].load_balancer[0].ingress[0].ip}"
+            value = "http://${data.kubernetes_service.ingress_nginx.status[0].load_balancer[0].ingress[0].ip}"
           }
 
           port {
             container_port = 3000
-            name = "http"
+            name           = "http"
           }
 
           resources {
@@ -276,7 +281,7 @@ resource "kubernetes_deployment" "auth_api" {
               port = 3000
             }
             initial_delay_seconds = 15
-            period_seconds       = 10
+            period_seconds        = 10
           }
 
           liveness_probe {
@@ -285,20 +290,18 @@ resource "kubernetes_deployment" "auth_api" {
               port = 3000
             }
             initial_delay_seconds = 20
-            period_seconds       = 10
+            period_seconds        = 10
           }
         }
       }
     }
   }
-
   depends_on = [
     kubernetes_deployment.mysql,
     kubernetes_service.mysql_service
   ]
 }
 
-# Backend Service
 resource "kubernetes_service" "auth_api" {
   metadata {
     name = "auth-api-service"
@@ -319,7 +322,9 @@ resource "kubernetes_service" "auth_api" {
   }
 }
 
-# Frontend Deployment
+##################################
+# FRONTEND: DEPLOYMENT E SERVICE
+##################################
 resource "kubernetes_deployment" "auth_ui" {
   metadata {
     name = "auth-ui"
@@ -350,9 +355,14 @@ resource "kubernetes_deployment" "auth_ui" {
             value = var.react_app_api_url
           }
 
+          command = ["/bin/sh", "-c"]
+          args = [
+            "echo 'window._env_ = { REACT_APP_API_URL: \"/api\" };' > /usr/share/nginx/html/config.js && nginx -g 'daemon off;'"
+          ]
+
           port {
             container_port = 80
-            name = "http"
+            name           = "http"
           }
 
           readiness_probe {
@@ -361,10 +371,10 @@ resource "kubernetes_deployment" "auth_ui" {
               port = 80
             }
             initial_delay_seconds = 10
-            period_seconds       = 5
-            failure_threshold    = 3
-            success_threshold    = 1
-            timeout_seconds      = 1
+            period_seconds        = 5
+            failure_threshold     = 3
+            success_threshold     = 1
+            timeout_seconds       = 1
           }
 
           liveness_probe {
@@ -373,10 +383,10 @@ resource "kubernetes_deployment" "auth_ui" {
               port = 80
             }
             initial_delay_seconds = 15
-            period_seconds       = 10
-            failure_threshold    = 3
-            success_threshold    = 1
-            timeout_seconds      = 1
+            period_seconds        = 10
+            failure_threshold     = 3
+            success_threshold     = 1
+            timeout_seconds       = 1
           }
 
           resources {
@@ -393,11 +403,11 @@ resource "kubernetes_deployment" "auth_ui" {
       }
     }
   }
-
-  depends_on = [kubernetes_deployment.auth_api]
+  depends_on = [
+    kubernetes_deployment.auth_api
+  ]
 }
 
-# Frontend Service
 resource "kubernetes_service" "auth_ui" {
   metadata {
     name = "auth-ui-service"
@@ -409,7 +419,7 @@ resource "kubernetes_service" "auth_ui" {
     selector = {
       app = "auth-ui"
     }
-    type = "LoadBalancer"
+    type = "ClusterIP"
     port {
       port        = 80
       target_port = 80

@@ -8,6 +8,10 @@ terraform {
       source = "hashicorp/kubernetes"
       version = "2.33.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "2.17.0"
+    }
   }
 }
 
@@ -19,11 +23,12 @@ provider "digitalocean" {
 resource "digitalocean_kubernetes_cluster" "meu_cluster" {
   name    = "meu-cluster"
   region  = "nyc1"
-  version = "1.31.1-do.3"
+  # Ajuste para a versão que desejar
+  version = "1.32.2-do.0"
 
   node_pool {
     name       = "default-pool"
-    size       = "s-1vcpu-2gb"
+    size       = "s-2vcpu-4gb"
     node_count = 2
   }
 
@@ -31,8 +36,7 @@ resource "digitalocean_kubernetes_cluster" "meu_cluster" {
     command = <<-EOT
       echo "Iniciando kubeconfig..."
       doctl kubernetes cluster kubeconfig save meu-cluster
-      echo "Kubeconfig salvo com sucesso!"
-      echo "Aguardando cluster ficar pronto..."
+      echo "Kubeconfig salvo. Aguardando cluster ficar pronto..."
       sleep 45
       kubectl wait --for=condition=Ready nodes --all --timeout=300s
       echo "Cluster está pronto!"
@@ -40,11 +44,20 @@ resource "digitalocean_kubernetes_cluster" "meu_cluster" {
   }
 }
 
-# Configuração do Provider Kubernetes
 provider "kubernetes" {
-  host  = digitalocean_kubernetes_cluster.meu_cluster.endpoint
-  token = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].token
+  host                   = digitalocean_kubernetes_cluster.meu_cluster.endpoint
+  token                  = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].token
   cluster_ca_certificate = base64decode(
     digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].cluster_ca_certificate
   )
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = digitalocean_kubernetes_cluster.meu_cluster.endpoint
+    token                  = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].token
+    cluster_ca_certificate = base64decode(
+      digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].cluster_ca_certificate
+    )
+  }
 }
