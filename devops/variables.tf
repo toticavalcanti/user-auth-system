@@ -23,5 +23,5 @@ variable "mysql_root_password" {
 variable "react_app_api_url" {
   description = "URL para a API do auth-api"
   type        = string
-  default     = "/api"
+  default     = "/api/"
 }

@@ -5,7 +5,7 @@ terraform {
       version = "~> 2.0"
     }
     kubernetes = {
-      source = "hashicorp/kubernetes"
+      source  = "hashicorp/kubernetes"
       version = "2.33.0"
     }
     helm = {
@@ -21,8 +21,8 @@ provider "digitalocean" {
 
 # Criação do Cluster Kubernetes
 resource "digitalocean_kubernetes_cluster" "meu_cluster" {
-  name    = "meu-cluster"
-  region  = "nyc1"
+  name   = "meu-cluster"
+  region = "nyc1"
   # Ajuste para a versão que desejar
   version = "1.32.2-do.0"
 
@@ -45,8 +45,8 @@ resource "digitalocean_kubernetes_cluster" "meu_cluster" {
 }
 
 provider "kubernetes" {
-  host                   = digitalocean_kubernetes_cluster.meu_cluster.endpoint
-  token                  = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].token
+  host  = digitalocean_kubernetes_cluster.meu_cluster.endpoint
+  token = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].token
   cluster_ca_certificate = base64decode(
     digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].cluster_ca_certificate
   )
@@ -54,8 +54,8 @@ provider "kubernetes" {
 
 provider "helm" {
   kubernetes {
-    host                   = digitalocean_kubernetes_cluster.meu_cluster.endpoint
-    token                  = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].token
+    host  = digitalocean_kubernetes_cluster.meu_cluster.endpoint
+    token = digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].token
     cluster_ca_certificate = base64decode(
       digitalocean_kubernetes_cluster.meu_cluster.kube_config[0].cluster_ca_certificate
     )

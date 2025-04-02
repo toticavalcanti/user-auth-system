@@ -348,16 +348,20 @@ resource "kubernetes_deployment" "auth_ui" {
       spec {
         container {
           name  = "auth-ui"
-          image = "toticavalcanti/auth-ui:v1.0"
+          image = "toticavalcanti/auth-ui:v1.1"
 
           env {
             name  = "REACT_APP_API_URL"
-            value = var.react_app_api_url
+            value = var.react_app_api_url # Ex.: "/api/"
           }
 
           command = ["/bin/sh", "-c"]
+          # Usamos a sintaxe de HEREDOC no "args" para evitar problemas de escape
           args = [
-            "echo 'window._env_ = { REACT_APP_API_URL: \"/api\" };' > /usr/share/nginx/html/config.js && nginx -g 'daemon off;'"
+            <<-EOT
+              echo 'window._env_ = { REACT_APP_API_URL: \"${var.react_app_api_url}\" };' > /usr/share/nginx/html/config.js
+              nginx -g 'daemon off;'
+            EOT
           ]
 
           port {
@@ -403,10 +407,12 @@ resource "kubernetes_deployment" "auth_ui" {
       }
     }
   }
+
   depends_on = [
     kubernetes_deployment.auth_api
   ]
 }
+
 
 resource "kubernetes_service" "auth_ui" {
   metadata {
