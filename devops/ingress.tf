@@ -13,7 +13,7 @@ resource "kubernetes_ingress_v1" "app_ingress" {
 
     rule {
       http {
-        # Rotas da API
+        # Todas as rotas da API
         path {
           path      = "/api"
           path_type = "Prefix"
@@ -27,7 +27,6 @@ resource "kubernetes_ingress_v1" "app_ingress" {
           }
         }
 
-        # Rotas de autenticação
         path {
           path      = "/forgot"
           path_type = "Prefix"
@@ -41,14 +40,29 @@ resource "kubernetes_ingress_v1" "app_ingress" {
           }
         }
 
+        # Rota exata para POST /reset (processamento do formulário)
         path {
           path      = "/reset"
-          path_type = "Prefix"
+          path_type = "Exact"
           backend {
             service {
               name = kubernetes_service.auth_api.metadata[0].name
               port {
                 number = 3000
+              }
+            }
+          }
+        }
+
+        # Rota para /reset/[token] (visualização do formulário)
+        path {
+          path      = "/reset/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = kubernetes_service.auth_ui.metadata[0].name
+              port {
+                number = 80
               }
             }
           }
@@ -106,7 +120,7 @@ resource "kubernetes_ingress_v1" "app_ingress" {
           }
         }
 
-        # Arquivos estáticos
+        # Serve arquivos estáticos
         path {
           path      = "/static"
           path_type = "Prefix"
@@ -120,7 +134,7 @@ resource "kubernetes_ingress_v1" "app_ingress" {
           }
         }
 
-        # Rota padrão
+        # Todas as outras rotas (como /reset/:token) vão para o frontend
         path {
           path      = "/"
           path_type = "Prefix"
