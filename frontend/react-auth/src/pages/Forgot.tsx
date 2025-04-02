@@ -12,7 +12,7 @@ const Forgot = () => {
   const submit = async (e: SyntheticEvent) => {
     e.preventDefault();
     try {
-      await axios.post('forgot', {
+      await axios.post('/forgot', {
         email
       });
       setNotify({
