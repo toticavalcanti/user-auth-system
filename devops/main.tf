@@ -1,4 +1,5 @@
 terraform {
+  required_version = ">= 1.0"
   required_providers {
     digitalocean = {
       source  = "digitalocean/digitalocean"
@@ -21,10 +22,9 @@ provider "digitalocean" {
 
 # Criação do Cluster Kubernetes
 resource "digitalocean_kubernetes_cluster" "meu_cluster" {
-  name   = "meu-cluster"
-  region = "nyc1"
-  # Ajuste para a versão que desejar
-  version = "1.32.2-do.0"
+  name    = var.cluster_name
+  region  = "nyc1"
+  version = var.cluster_version
 
   node_pool {
     name       = "default-pool"
@@ -35,7 +35,7 @@ resource "digitalocean_kubernetes_cluster" "meu_cluster" {
   provisioner "local-exec" {
     command = <<-EOT
       echo "Iniciando kubeconfig..."
-      doctl kubernetes cluster kubeconfig save meu-cluster
+      doctl kubernetes cluster kubeconfig save ${var.cluster_name}
       echo "Kubeconfig salvo. Aguardando cluster ficar pronto..."
       sleep 45
       kubectl wait --for=condition=Ready nodes --all --timeout=300s

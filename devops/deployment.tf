@@ -2,10 +2,11 @@
 data "kubernetes_service" "ingress_nginx" {
   metadata {
     name      = "ingress-nginx-controller"
-    namespace = "default"
+    namespace = "ingress-nginx"
   }
   depends_on = [helm_release.ingress_nginx]
 }
+
 ##################################
 # SECRETS
 ##################################
@@ -102,9 +103,12 @@ resource "kubernetes_deployment" "mysql" {
         }
       }
       spec {
+        service_account_name            = kubernetes_service_account.mysql.metadata[0].name
+        automount_service_account_token = false
+
         container {
           name  = "mysql"
-          image = "mysql:5.7"
+          image = var.mysql_image
 
           env {
             name  = "MYSQL_ROOT_PASSWORD"
@@ -113,17 +117,17 @@ resource "kubernetes_deployment" "mysql" {
 
           env {
             name  = "MYSQL_DATABASE"
-            value = "mysql"
+            value = var.mysql_database
           }
 
           resources {
             limits = {
-              memory = "512Mi"
-              cpu    = "500m"
+              memory = local.mysql_resources.limits.memory
+              cpu    = local.mysql_resources.limits.cpu
             }
             requests = {
-              memory = "256Mi"
-              cpu    = "250m"
+              memory = local.mysql_resources.requests.memory
+              cpu    = local.mysql_resources.requests.cpu
             }
           }
 
@@ -197,7 +201,7 @@ resource "kubernetes_deployment" "auth_api" {
     }
   }
   spec {
-    replicas = 1
+    replicas = var.backend_replica_count
     selector {
       match_labels = {
         app = "auth-api"
@@ -210,6 +214,17 @@ resource "kubernetes_deployment" "auth_api" {
         }
       }
       spec {
+        service_account_name            = kubernetes_service_account.backend.metadata[0].name
+        automount_service_account_token = false
+
+        security_context {
+          run_as_non_root = local.pod_security_context.run_as_non_root
+          run_as_user     = local.pod_security_context.run_as_user
+          run_as_group    = local.pod_security_context.run_as_group
+          fs_group        = local.pod_security_context.fs_group
+          seccomp_profile { type = "RuntimeDefault" }
+        }
+
         init_container {
           name  = "wait-for-mysql"
           image = "busybox:1.28"
@@ -217,11 +232,18 @@ resource "kubernetes_deployment" "auth_api" {
             "sh", "-c",
             "until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;"
           ]
+          security_context {
+            allow_privilege_escalation = false
+            read_only_root_filesystem  = true
+            run_as_non_root            = true
+            run_as_user                = 65534
+            capabilities { drop = ["ALL"] }
+          }
         }
 
         container {
           name  = "auth-api"
-          image = "toticavalcanti/fiber-auth-api:v1.0"
+          image = var.backend_image
 
           env {
             name  = "MYSQL_ROOT_PASSWORD"
@@ -230,7 +252,7 @@ resource "kubernetes_deployment" "auth_api" {
 
           env {
             name  = "DB_DSN"
-            value = "root:${var.mysql_root_password}@tcp(mysql-service:3306)/mysql?parseTime=true"
+            value = "root:${var.mysql_root_password}@tcp(mysql-service:3306)/${var.mysql_database}?parseTime=true"
           }
 
           env {
@@ -253,10 +275,17 @@ resource "kubernetes_deployment" "auth_api" {
             }
           }
 
-          # Se precisar, use para alguma lógica interna:
           env {
             name  = "APP_URL"
             value = "http://${data.kubernetes_service.ingress_nginx.status[0].load_balancer[0].ingress[0].ip}"
+          }
+
+          security_context {
+            allow_privilege_escalation = local.container_security_context.allow_privilege_escalation
+            read_only_root_filesystem  = local.container_security_context.read_only_root_filesystem
+            run_as_non_root            = local.container_security_context.run_as_non_root
+            run_as_user                = local.container_security_context.run_as_user
+            capabilities { drop = local.container_security_context.drop_capabilities }
           }
 
           port {
@@ -266,13 +295,18 @@ resource "kubernetes_deployment" "auth_api" {
 
           resources {
             limits = {
-              cpu    = "250m"
-              memory = "256Mi"
+              cpu    = local.backend_resources.limits.cpu
+              memory = local.backend_resources.limits.memory
             }
             requests = {
-              cpu    = "100m"
-              memory = "128Mi"
+              cpu    = local.backend_resources.requests.cpu
+              memory = local.backend_resources.requests.memory
             }
+          }
+
+          volume_mount {
+            name       = "tmp-dir"
+            mount_path = "/tmp"
           }
 
           readiness_probe {
@@ -292,6 +326,11 @@ resource "kubernetes_deployment" "auth_api" {
             initial_delay_seconds = 20
             period_seconds        = 10
           }
+        }
+
+        volume {
+          name = "tmp-dir"
+          empty_dir { medium = "Memory" }
         }
       }
     }
@@ -346,17 +385,27 @@ resource "kubernetes_deployment" "auth_ui" {
         }
       }
       spec {
+        service_account_name            = kubernetes_service_account.frontend.metadata[0].name
+        automount_service_account_token = false
+
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 101
+          run_as_group    = 101
+          fs_group        = 101
+          seccomp_profile { type = "RuntimeDefault" }
+        }
+
         container {
           name  = "auth-ui"
-          image = "toticavalcanti/auth-ui:v1.1"
+          image = var.frontend_image
 
           env {
             name  = "REACT_APP_API_URL"
-            value = var.react_app_api_url # Ex.: "/api/"
+            value = var.react_app_api_url
           }
 
           command = ["/bin/sh", "-c"]
-          # Usamos a sintaxe de HEREDOC no "args" para evitar problemas de escape
           args = [
             <<-EOT
               echo 'window._env_ = { REACT_APP_API_URL: \"${var.react_app_api_url}\" };' > /usr/share/nginx/html/config.js
@@ -364,9 +413,41 @@ resource "kubernetes_deployment" "auth_ui" {
             EOT
           ]
 
+          security_context {
+            allow_privilege_escalation = false
+            read_only_root_filesystem  = true
+            run_as_non_root            = true
+            run_as_user                = 101
+            capabilities { drop = ["ALL"] }
+          }
+
           port {
             container_port = 80
             name           = "http"
+          }
+
+          resources {
+            limits = {
+              cpu    = local.frontend_resources.limits.cpu
+              memory = local.frontend_resources.limits.memory
+            }
+            requests = {
+              cpu    = local.frontend_resources.requests.cpu
+              memory = local.frontend_resources.requests.memory
+            }
+          }
+
+          volume_mount {
+            name       = "nginx-cache"
+            mount_path = "/var/cache/nginx"
+          }
+          volume_mount {
+            name       = "nginx-run"
+            mount_path = "/var/run"
+          }
+          volume_mount {
+            name       = "tmp-dir"
+            mount_path = "/tmp"
           }
 
           readiness_probe {
@@ -392,17 +473,19 @@ resource "kubernetes_deployment" "auth_ui" {
             success_threshold     = 1
             timeout_seconds       = 1
           }
+        }
 
-          resources {
-            limits = {
-              cpu    = "200m"
-              memory = "256Mi"
-            }
-            requests = {
-              cpu    = "100m"
-              memory = "128Mi"
-            }
-          }
+        volume {
+          name = "nginx-cache"
+          empty_dir { medium = "Memory" }
+        }
+        volume {
+          name = "nginx-run"
+          empty_dir { medium = "Memory" }
+        }
+        volume {
+          name = "tmp-dir"
+          empty_dir { medium = "Memory" }
         }
       }
     }
@@ -412,7 +495,6 @@ resource "kubernetes_deployment" "auth_ui" {
     kubernetes_deployment.auth_api
   ]
 }
-
 
 resource "kubernetes_service" "auth_ui" {
   metadata {
